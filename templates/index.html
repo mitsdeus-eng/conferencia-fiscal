@@ -20,6 +20,8 @@
             --warn-text: #92400e;
             --err-bg: #fee2e2;
             --err-text: #991b1b;
+            --info-bg: #dbeafe;
+            --info-text: #1e40af;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
@@ -148,11 +150,13 @@
             color: var(--navy-dark);
             border-bottom: 1px solid var(--border);
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
+            gap: 8px;
         }
         .preview-itens {
-            max-height: 320px;
+            max-height: 340px;
             overflow-y: auto;
         }
         .preview-row {
@@ -181,6 +185,14 @@
             font-size: 0.72rem;
             font-weight: 700;
         }
+        .badge-match-info {
+            background: var(--info-bg);
+            color: var(--info-text);
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
         .badge-match-warn {
             background: var(--warn-bg);
             color: var(--warn-text);
@@ -199,8 +211,8 @@
             background: #ffffff;
             text-transform: uppercase;
         }
-        .input-empresa { width: 170px; }
-        .select-vinculo { min-width: 210px; }
+        .input-empresa { width: 190px; }
+        .select-vinculo { min-width: 240px; }
 
         /* Progresso */
         .progress-box {
@@ -239,6 +251,70 @@
         /* Painel de Resultados */
         #painel-resultados { display: none; }
 
+        /* Card de Revisão de Vínculos Pós-Extração */
+        .vinculos-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
+        .vinculos-header {
+            background: #f8fafc;
+            padding: 13px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .vinculos-header h4 {
+            font-size: 0.92rem;
+            color: var(--navy-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .vinculos-body {
+            padding: 14px 18px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 16px;
+        }
+        .vinculos-col h5 {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            letter-spacing: 0.03em;
+        }
+        .vinculo-item {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #fcfdff;
+            font-size: 0.82rem;
+        }
+        .vinculo-item.pendente {
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+        .meta-cnpj {
+            display: block;
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
         .empresa-selector-bar {
             background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
             border: 2px solid #bfdbfe;
@@ -259,7 +335,7 @@
             font-weight: 700;
             color: var(--navy-dark);
             background: #ffffff;
-            min-width: 300px;
+            min-width: 320px;
             cursor: pointer;
         }
         .empresa-pills {
@@ -393,12 +469,12 @@
         <div class="grid-upload">
             <div class="upload-box">
                 <h3>1. Livros Fiscais (PDFs)</h3>
-                <p>Selecione todos os PDFs (ex: Alpine.pdf, DMF.pdf...)</p>
+                <p>Selecione todos os PDFs (ex: Avant.pdf, DMF.pdf...)</p>
                 <input type="file" id="input-livros" multiple accept=".pdf,.xlsx,.ods,.csv">
             </div>
             <div class="upload-box">
                 <h3>2. Planilhas das Empresas</h3>
-                <p>Selecione as planilhas correspondentes (.xlsx, .ods, .csv)</p>
+                <p>Selecione as planilhas (.xlsx, .ods, .csv — mesmo com nomes genéricos)</p>
                 <input type="file" id="input-planilhas" multiple accept=".xlsx,.ods,.csv,.pdf">
             </div>
         </div>
@@ -419,10 +495,10 @@
             </button>
         </div>
 
-        <!-- Pareamento automático entre PDF e Planilha -->
+        <!-- Pré-visualização da Fila antes do envio -->
         <div class="preview-lista" id="preview-lista">
             <div class="preview-header">
-                <span>Pareamento Automático (PDF ↔ Planilha correspondente)</span>
+                <span>Fila de Arquivos (Planilhas com nome genérico serão pareadas automaticamente pelo CNPJ na leitura)</span>
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <span id="contador-arquivos">0 arquivos</span>
                     <button type="button" onclick="limparFila()" style="background:#fee2e2; color:#991b1b; border:none; padding:4px 10px; border-radius:6px; font-size:0.78rem; font-weight:700; cursor:pointer;">
@@ -447,8 +523,32 @@
         <div class="erros-lote" id="erros-lote"></div>
     </div>
 
-    <!-- Painel de Resultados Persistente com Troca de Empresa -->
+    <!-- Painel de Resultados Persistente com Revisão de Vínculos e Troca de Empresa -->
     <div id="painel-resultados">
+        <!-- Revisão de Pareamento PDF <-> Planilha (pós-leitura de CNPJ/Cabeçalho) -->
+        <div class="vinculos-card" id="vinculos-card">
+            <div class="vinculos-header" onclick="togglePainelVinculos()">
+                <h4>
+                    <span>Pareamento PDF ↔ Planilha (CNPJ & Cabeçalho)</span>
+                    <span id="resumo-vinculos-badge" class="badge-match-ok">0 pareados</span>
+                </h4>
+                <span id="toggle-vinculos-label" style="font-size: 0.8rem; font-weight: 600; color: var(--navy-mid);">
+                    Ocultar ▲
+                </span>
+            </div>
+            <div class="vinculos-body" id="vinculos-body">
+                <div class="vinculos-col">
+                    <h5>Livros Fiscais (PDFs) — Nome da Empresa & CNPJ Lido</h5>
+                    <div id="lista-vinculos-livros"></div>
+                </div>
+                <div class="vinculos-col">
+                    <h5>Planilhas — Vínculo Automático ou Manual</h5>
+                    <div id="lista-vinculos-planilhas"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seletor de Empresa -->
         <div class="empresa-selector-bar">
             <div>
                 <div style="font-size: 0.78rem; font-weight: 700; color: var(--navy-mid); text-transform: uppercase; margin-bottom: 4px;">
@@ -464,6 +564,7 @@
             <div class="empresa-pills" id="empresa-pills"></div>
         </div>
 
+        <!-- KPIs -->
         <div class="kpis">
             <div class="kpi-card">
                 <div class="kpi-label">Total Livro Fiscal</div>
@@ -483,6 +584,7 @@
             </div>
         </div>
 
+        <!-- Tabela de Conferência -->
         <div class="card">
             <div class="filtros-tabela">
                 <div class="filter-pills" id="status-pills">
@@ -493,7 +595,7 @@
                     <button type="button" class="f-pill" data-st="AUSENTE_PLANILHA" onclick="mudarFiltroStatus('AUSENTE_PLANILHA', this)">Ausente Planilha</button>
                     <button type="button" class="f-pill" data-st="OK" onclick="mudarFiltroStatus('OK', this)">OK</button>
                 </div>
-                <input type="text" class="search-input" id="busca-tabela" placeholder="Buscar Nota ou CFOP..." oninput="renderizarTabela()">
+                <input type="text" class="search-input" id="busca-tabela" placeholder="Buscar Nota, CFOP ou Empresa..." oninput="renderizarTabela()">
             </div>
 
             <div class="table-wrap">
@@ -520,10 +622,12 @@
 
 <script>
     let filaArquivos = []; // { file, origem: 'livro'|'planilha', tokens: [], empresa: string, pareado: boolean, manual: boolean }
+    let arquivosProcessados = []; // Guarda os dados extraídos + CNPJ/cabeçalho de cada arquivo
     let dadosExtraidos = [];
     let empresaSelecionada = '__TODAS__';
     let filtroStatusAtual = 'TODOS';
     let linhasAtuaisTabela = [];
+    let painelVinculosAberto = true;
 
     const STOPWORDS = new Set([
         'LIVRO', 'FISCAL', 'FISCAIS', 'ENTRADA', 'ENTRADAS', 'SAIDA', 'SAIDAS',
@@ -535,7 +639,7 @@
         'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ',
         'JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO',
         'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
-        'PDF', 'XLSX', 'XLS', 'CSV', 'ODS'
+        'TESTE', 'ARQUIVO', 'PLAN', 'LIV', 'LF', 'PDF', 'XLSX', 'XLS', 'CSV', 'ODS'
     ]);
 
     document.getElementById('input-livros').addEventListener('change', function(e) {
@@ -548,17 +652,24 @@
         e.target.value = '';
     });
 
+    function normalizarTexto(txt) {
+        return (txt || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toUpperCase();
+    }
+
     function extrairTokensLimpos(nomeArquivo) {
         let base = nomeArquivo.replace(/\.[^/.]+$/, '');
-        base = base.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-        // Separa qualquer caractere que não seja letra ou número (inclui _, -, ., /, etc.)
+        base = normalizarTexto(base);
         const partes = base.split(/[^A-Z0-9]+/).filter(Boolean);
         const tokens = partes.filter(p => {
             if (STOPWORDS.has(p)) return false;
-            if (/^\d+$/.test(p)) return false; // ignora números puros (01, 09, 2026)
+            if (/^\d+$/.test(p)) return false; // ignora números puros (01, 2026)
+            if (/^[A-Z]{1,3}\d{5,}$/.test(p)) return false; // ignora códigos gerados pelo sistema (ex: LF0079181126165846)
             return true;
         });
-        return tokens.length > 0 ? tokens : [base.replace(/[^A-Z0-9]+/g, ' ').trim() || 'GERAL'];
+        return tokens;
     }
 
     function calcularSimilaridade(tokensA, tokensB) {
@@ -575,19 +686,17 @@
         return matches / Math.min(tokensA.length, tokensB.length);
     }
 
-    function recalcularPareamento() {
+    function recalcularPareamentoPreFila() {
         const livros = filaArquivos.filter(f => f.origem === 'livro');
         const planilhas = filaArquivos.filter(f => f.origem === 'planilha');
 
-        // 1. Define o nome base das empresas a partir dos Livros (PDFs)
         livros.forEach(liv => {
             if (!liv.manual) {
-                liv.empresa = liv.tokens.join(' ');
+                liv.empresa = liv.tokens.length ? liv.tokens.join(' ') : liv.file.name.replace(/\.[^/.]+$/, '').toUpperCase();
             }
             liv.pareado = false;
         });
 
-        // Se dois livros tiverem tokens idênticos ou muito próximos (ex: Entradas e Saídas da mesma empresa), unifica
         for (let i = 0; i < livros.length; i++) {
             for (let j = i + 1; j < livros.length; j++) {
                 if (!livros[j].manual && calcularSimilaridade(livros[i].tokens, livros[j].tokens) >= 0.8) {
@@ -596,7 +705,6 @@
             }
         }
 
-        // 2. Vincula cada Planilha ao Livro (PDF) correspondente
         planilhas.forEach(pla => {
             if (pla.manual) {
                 pla.pareado = livros.some(l => l.empresa === pla.empresa);
@@ -607,12 +715,11 @@
             }
 
             if (livros.length === 0) {
-                pla.empresa = pla.tokens.join(' ');
+                pla.empresa = pla.tokens.length ? pla.tokens.join(' ') : pla.file.name.replace(/\.[^/.]+$/, '').toUpperCase();
                 pla.pareado = false;
                 return;
             }
 
-            // Caso especial: apenas 1 PDF e 1 Planilha na fila -> pareia direto
             if (livros.length === 1 && planilhas.length === 1) {
                 pla.empresa = livros[0].empresa;
                 pla.pareado = true;
@@ -636,7 +743,7 @@
                 pla.pareado = true;
                 melhorLivro.pareado = true;
             } else {
-                pla.empresa = pla.tokens.join(' ');
+                pla.empresa = ''; // Será resolvido automaticamente via CNPJ no backend!
                 pla.pareado = false;
             }
         });
@@ -658,7 +765,7 @@
                 });
             }
         });
-        recalcularPareamento();
+        recalcularPareamentoPreFila();
         renderizarFilaArquivos();
     }
 
@@ -668,26 +775,30 @@
         filaArquivos[idx].empresa = nomeLimpo;
         filaArquivos[idx].manual = true;
 
-        // Atualiza planilhas que estavam pareadas automaticamente com esse livro
         filaArquivos.forEach(item => {
             if (item.origem === 'planilha' && !item.manual && item.empresa === antigoNome) {
                 item.empresa = nomeLimpo;
             }
         });
-        recalcularPareamento();
+        recalcularPareamentoPreFila();
         renderizarFilaArquivos();
     }
 
-    function vincularPlanilhaAoLivro(idxPlanilha, empresaDestino) {
-        filaArquivos[idxPlanilha].empresa = empresaDestino;
-        filaArquivos[idxPlanilha].manual = true;
-        recalcularPareamento();
+    function vincularPlanilhaPreFila(idxPlanilha, empresaDestino) {
+        if (!empresaDestino) {
+            filaArquivos[idxPlanilha].empresa = '';
+            filaArquivos[idxPlanilha].manual = false;
+        } else {
+            filaArquivos[idxPlanilha].empresa = empresaDestino;
+            filaArquivos[idxPlanilha].manual = true;
+        }
+        recalcularPareamentoPreFila();
         renderizarFilaArquivos();
     }
 
     function removerDaFila(idx) {
         filaArquivos.splice(idx, 1);
-        recalcularPareamento();
+        recalcularPareamentoPreFila();
         renderizarFilaArquivos();
     }
 
@@ -718,7 +829,7 @@
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span class="tag-tipo tag-livro">PDF LIVRO</span>
                             <span style="font-weight:600;">${item.file.name}</span>
-                            ${item.pareado ? '<span class="badge-match-ok">✓ Com planilha</span>' : '<span class="badge-match-warn">Aguardando planilha</span>'}
+                            ${item.pareado ? '<span class="badge-match-ok">✓ Com planilha</span>' : '<span class="badge-match-info">Lê CNPJ ao processar</span>'}
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span style="color:#64748b; font-size:0.78rem;">Empresa:</span>
@@ -732,21 +843,21 @@
                     </div>
                 `;
             } else {
-                const opcoes = new Set([...empresasLivros, item.empresa]);
-                const optionsHtml = Array.from(opcoes).map(emp =>
-                    `<option value="${emp}" ${emp === item.empresa ? 'selected' : ''}>${emp}</option>`
-                ).join('');
+                const optionsHtml = `<option value="">-- Auto-parear por CNPJ na leitura --</option>` +
+                    empresasLivros.map(emp =>
+                        `<option value="${emp}" ${emp === item.empresa ? 'selected' : ''}>${emp}</option>`
+                    ).join('');
 
                 return `
                     <div class="preview-row" style="background:#fafbff;">
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span class="tag-tipo tag-plan">PLANILHA</span>
                             <span>${item.file.name}</span>
-                            ${item.pareado ? '<span class="badge-match-ok">✓ Pareada ao PDF</span>' : '<span class="badge-match-warn">⚠ Vincular PDF</span>'}
+                            ${item.pareado ? '<span class="badge-match-ok">✓ Pareada pelo nome</span>' : '<span class="badge-match-info">Auto-pareia via CNPJ</span>'}
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="color:#64748b; font-size:0.78rem;">Corresponde ao PDF:</span>
-                            <select class="select-vinculo" onchange="vincularPlanilhaAoLivro(${idx}, this.value)">
+                            <span style="color:#64748b; font-size:0.78rem;">PDF:</span>
+                            <select class="select-vinculo" onchange="vincularPlanilhaPreFila(${idx}, this.value)">
                                 ${optionsHtml}
                             </select>
                             <button type="button" onclick="removerDaFila(${idx})" title="Remover arquivo"
@@ -778,6 +889,7 @@
         errosBox.style.display = 'none';
         errosBox.innerHTML = '';
 
+        arquivosProcessados = [];
         dadosExtraidos = [];
         const erros = [];
         const modo = document.querySelector('input[name="modo_operacao"]:checked').value;
@@ -785,7 +897,7 @@
         for (let i = 0; i < filaArquivos.length; i++) {
             const item = filaArquivos[i];
             const pct = Math.round((i / filaArquivos.length) * 100);
-            progressTexto.textContent = `Processando ${i + 1} de ${filaArquivos.length}: ${item.file.name} (${item.empresa})`;
+            progressTexto.textContent = `Processando ${i + 1} de ${filaArquivos.length}: ${item.file.name}`;
             progressPct.textContent = `${pct}%`;
             progressFill.style.width = `${pct}%`;
 
@@ -800,15 +912,21 @@
                 if (!resp.ok || !json.sucesso) {
                     erros.push(`• <strong>${item.file.name}</strong>: ${json.erro || 'Falha na leitura'}`);
                 } else {
-                    json.registros.forEach(reg => {
-                        dadosExtraidos.push({
-                            empresa: item.empresa,
-                            origem: item.origem,
-                            data: reg.data,
-                            nota: reg.nota,
-                            cfop: reg.cfop,
-                            valor: Number(reg.valor) || 0
-                        });
+                    arquivosProcessados.push({
+                        id: i,
+                        nomeArquivo: item.file.name,
+                        origem: item.origem,
+                        tokensNome: item.tokens,
+                        empresaInicial: item.empresa,
+                        manualInicial: item.manual,
+                        empresaFinal: item.empresa || '',
+                        cnpj: json.cnpj || '',
+                        cnpjFormatado: json.cnpj_formatado || '',
+                        empresaDetectada: json.empresa_detectada || '',
+                        cabecalhoTexto: json.cabecalho_texto || '',
+                        motivoPareamento: '',
+                        pareado: false,
+                        registros: json.registros || []
                     });
                 }
             } catch (err) {
@@ -826,26 +944,283 @@
             errosBox.innerHTML = `<strong>Avisos durante a leitura:</strong><br>${erros.join('<br>')}`;
         }
 
+        executarAutoPareamentoPosLeitura();
+        reconstruirDadosConsolidados();
+        renderizarPainelVinculos();
         montarSeletorEmpresas();
         document.getElementById('painel-resultados').style.display = 'block';
         renderizarTabela();
     }
 
+    function executarAutoPareamentoPosLeitura() {
+        const livros = arquivosProcessados.filter(a => a.origem === 'livro');
+        const planilhas = arquivosProcessados.filter(a => a.origem === 'planilha');
+
+        // 1. Define o nome final de cada PDF e unifica PDFs que tenham o mesmo CNPJ (ex: Entradas + Saídas)
+        const cnpjParaEmpresa = new Map();
+
+        livros.forEach(liv => {
+            let nomeBase = liv.empresaInicial;
+            if (!liv.manualInicial && (!nomeBase || nomeBase === 'GERAL') && liv.empresaDetectada) {
+                nomeBase = liv.empresaDetectada.split(' ').slice(0, 3).join(' ');
+            }
+            if (!nomeBase) {
+                nomeBase = liv.nomeArquivo.replace(/\.[^/.]+$/, '').toUpperCase();
+            }
+
+            if (liv.cnpj && cnpjParaEmpresa.has(liv.cnpj)) {
+                liv.empresaFinal = cnpjParaEmpresa.get(liv.cnpj);
+            } else {
+                liv.empresaFinal = nomeBase;
+                if (liv.cnpj) {
+                    cnpjParaEmpresa.set(liv.cnpj, nomeBase);
+                }
+            }
+        });
+
+        // 2. Pareia cada Planilha aos Livros usando: (1) Manual, (2) CNPJ exato, (3) Cabeçalho/Razão Social, (4) Nome do arquivo
+        planilhas.forEach(pla => {
+            // Caso 1: Vínculo manual feito na pré-fila
+            if (pla.manualInicial && pla.empresaInicial) {
+                const alvo = livros.find(l => l.empresaFinal === pla.empresaInicial || l.empresaInicial === pla.empresaInicial);
+                if (alvo) {
+                    pla.empresaFinal = alvo.empresaFinal;
+                    pla.pareado = true;
+                    pla.motivoPareamento = 'Manual';
+                    return;
+                }
+            }
+
+            // Caso 2: Match exato por CNPJ extraído das primeiras 25 linhas
+            if (pla.cnpj) {
+                const matchCnpj = livros.find(l => l.cnpj && l.cnpj === pla.cnpj);
+                if (matchCnpj) {
+                    pla.empresaFinal = matchCnpj.empresaFinal;
+                    pla.pareado = true;
+                    pla.motivoPareamento = 'CNPJ idêntico';
+                    return;
+                }
+            }
+
+            // Caso 3: Match por Razão Social / Cabeçalho lido dentro da planilha vs PDF
+            const cabPlanNorm = normalizarTexto(pla.empresaDetectada + ' ' + pla.cabecalhoTexto);
+            if (cabPlanNorm.trim().length > 5) {
+                let melhorLivro = null;
+                let melhorScore = 0;
+
+                for (const liv of livros) {
+                    const tokensEmpresa = extrairTokensLimpos(liv.empresaFinal);
+                    if (!tokensEmpresa.length) continue;
+
+                    let hits = 0;
+                    for (const tk of tokensEmpresa) {
+                        if (tk.length >= 3 && cabPlanNorm.includes(tk)) {
+                            hits++;
+                        }
+                    }
+                    const score = hits / tokensEmpresa.length;
+                    if (score > melhorScore) {
+                        melhorScore = score;
+                        melhorLivro = liv;
+                    }
+                }
+
+                if (melhorLivro && melhorScore >= 0.6) {
+                    pla.empresaFinal = melhorLivro.empresaFinal;
+                    pla.pareado = true;
+                    pla.motivoPareamento = 'Cabeçalho / Razão Social';
+                    return;
+                }
+            }
+
+            // Caso 4: Match pelo nome do arquivo (caso já tivesse batido na pré-fila)
+            if (pla.empresaInicial) {
+                const matchNome = livros.find(l => l.empresaFinal === pla.empresaInicial || l.empresaInicial === pla.empresaInicial);
+                if (matchNome) {
+                    pla.empresaFinal = matchNome.empresaFinal;
+                    pla.pareado = true;
+                    pla.motivoPareamento = 'Nome do arquivo';
+                    return;
+                }
+            }
+
+            // Caso 5: Não encontrou par (planilha genérica sem CNPJ compatível)
+            pla.pareado = false;
+            pla.motivoPareamento = 'Pendente de vínculo';
+            pla.empresaFinal = pla.empresaDetectada
+                ? pla.empresaDetectada.split(' ').slice(0, 3).join(' ')
+                : `SEM VÍNCULO (${pla.nomeArquivo})`;
+        });
+    }
+
+    function reconstruirDadosConsolidados() {
+        dadosExtraidos = [];
+        arquivosProcessados.forEach(arq => {
+            const emp = arq.empresaFinal || 'GERAL';
+            arq.registros.forEach(reg => {
+                dadosExtraidos.push({
+                    empresa: emp,
+                    origem: arq.origem,
+                    data: reg.data,
+                    nota: reg.nota,
+                    cfop: reg.cfop,
+                    valor: Number(reg.valor) || 0
+                });
+            });
+        });
+    }
+
+    function togglePainelVinculos() {
+        painelVinculosAberto = !painelVinculosAberto;
+        document.getElementById('vinculos-body').style.display = painelVinculosAberto ? 'grid' : 'none';
+        document.getElementById('toggle-vinculos-label').textContent = painelVinculosAberto ? 'Ocultar ▲' : 'Revisar / Ajustar ▼';
+    }
+
+    function renomearEmpresaPosLeitura(idArquivo, novoNome) {
+        const nomeLimpo = novoNome.trim().toUpperCase();
+        if (!nomeLimpo) return;
+
+        const arqAlvo = arquivosProcessados.find(a => a.id === idArquivo);
+        if (!arqAlvo) return;
+
+        const nomeAntigo = arqAlvo.empresaFinal;
+        arquivosProcessados.forEach(a => {
+            if (a.empresaFinal === nomeAntigo) {
+                a.empresaFinal = nomeLimpo;
+            }
+        });
+
+        reconstruirDadosConsolidados();
+        renderizarPainelVinculos();
+        montarSeletorEmpresas();
+        renderizarTabela();
+    }
+
+    function alterarVinculoPlanilhaPosLeitura(idPlanilha, novaEmpresa) {
+        const pla = arquivosProcessados.find(a => a.id === idPlanilha);
+        if (!pla) return;
+
+        if (novaEmpresa === '__SEM_VINCULO__') {
+            pla.pareado = false;
+            pla.motivoPareamento = 'Sem vínculo';
+            pla.empresaFinal = `SEM VÍNCULO (${pla.nomeArquivo})`;
+        } else {
+            pla.pareado = true;
+            pla.motivoPareamento = 'Manual';
+            pla.empresaFinal = novaEmpresa;
+        }
+
+        reconstruirDadosConsolidados();
+        renderizarPainelVinculos();
+        montarSeletorEmpresas();
+        renderizarTabela();
+    }
+
+    function renderizarPainelVinculos() {
+        const livros = arquivosProcessados.filter(a => a.origem === 'livro');
+        const planilhas = arquivosProcessados.filter(a => a.origem === 'planilha');
+
+        const qtdPareadas = planilhas.filter(p => p.pareado).length;
+        const qtdPendentes = planilhas.length - qtdPareadas;
+
+        const badge = document.getElementById('resumo-vinculos-badge');
+        if (qtdPendentes > 0) {
+            badge.className = 'badge-match-warn';
+            badge.textContent = `${qtdPareadas} pareada(s) • ${qtdPendentes} pendente(s)`;
+        } else {
+            badge.className = 'badge-match-ok';
+            badge.textContent = `✓ Todas as ${qtdPareadas} planilha(s) vinculadas`;
+        }
+
+        // Lista de PDFs (Livros)
+        const divLivros = document.getElementById('lista-vinculos-livros');
+        divLivros.innerHTML = livros.map(liv => {
+            const infoExtra = [
+                liv.cnpjFormatado ? `CNPJ: ${liv.cnpjFormatado}` : 'CNPJ não detectado',
+                liv.empresaDetectada ? liv.empresaDetectada : ''
+            ].filter(Boolean).join(' • ');
+
+            return `
+                <div class="vinculo-item">
+                    <div>
+                        <strong>${liv.nomeArquivo}</strong>
+                        <span class="meta-cnpj">${infoExtra}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-size:0.75rem; color:#64748b;">Empresa:</span>
+                        <input type="text" class="input-empresa" value="${liv.empresaFinal}"
+                               onchange="renomearEmpresaPosLeitura(${liv.id}, this.value)">
+                    </div>
+                </div>
+            `;
+        }).join('') || '<div style="font-size:0.82rem; color:#64748b;">Nenhum PDF carregado.</div>';
+
+        // Opções de empresas dos PDFs para o dropdown das planilhas
+        const empresasDisponiveis = Array.from(new Set(livros.map(l => l.empresaFinal))).sort();
+
+        // Lista de Planilhas
+        const divPlanilhas = document.getElementById('lista-vinculos-planilhas');
+        divPlanilhas.innerHTML = planilhas.map(pla => {
+            const infoExtra = [
+                pla.cnpjFormatado ? `CNPJ lido: ${pla.cnpjFormatado}` : 'Sem CNPJ no topo',
+                pla.empresaDetectada ? pla.empresaDetectada : ''
+            ].filter(Boolean).join(' • ');
+
+            const optionsHtml = `<option value="__SEM_VINCULO__" ${!pla.pareado ? 'selected' : ''}>-- Não vincular (manter separada) --</option>` +
+                empresasDisponiveis.map(emp =>
+                    `<option value="${emp}" ${pla.pareado && pla.empresaFinal === emp ? 'selected' : ''}>${emp}</option>`
+                ).join('');
+
+            return `
+                <div class="vinculo-item ${pla.pareado ? '' : 'pendente'}">
+                    <div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <strong>${pla.nomeArquivo}</strong>
+                            <span class="${pla.pareado ? 'badge-match-ok' : 'badge-match-warn'}">
+                                ${pla.pareado ? '✓ ' + pla.motivoPareamento : '⚠ Vincular PDF'}
+                            </span>
+                        </div>
+                        <span class="meta-cnpj">${infoExtra}</span>
+                    </div>
+                    <div>
+                        <select class="select-vinculo" onchange="alterarVinculoPlanilhaPosLeitura(${pla.id}, this.value)">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                </div>
+            `;
+        }).join('') || '<div style="font-size:0.82rem; color:#64748b;">Nenhuma planilha carregada.</div>';
+    }
+
     function montarSeletorEmpresas() {
-        const empresasSet = new Set(filaArquivos.map(f => f.empresa));
-        dadosExtraidos.forEach(d => empresasSet.add(d.empresa));
+        const empresasSet = new Set(arquivosProcessados.map(a => a.empresaFinal).filter(Boolean));
         const empresas = Array.from(empresasSet).sort();
 
         const select = document.getElementById('select-empresa');
         const pills = document.getElementById('empresa-pills');
 
+        // Monta mapa de CNPJ por empresa para exibir bonito no seletor
+        const cnpjPorEmpresa = new Map();
+        arquivosProcessados.forEach(a => {
+            if (a.empresaFinal && a.cnpjFormatado && !cnpjPorEmpresa.has(a.empresaFinal)) {
+                cnpjPorEmpresa.set(a.empresaFinal, a.cnpjFormatado);
+            }
+        });
+
         select.innerHTML = `<option value="__TODAS__">TODAS AS EMPRESAS (${empresas.length} empresas)</option>` +
-            empresas.map(emp => `<option value="${emp}">${emp}</option>`).join('');
+            empresas.map(emp => {
+                const cnpjTxt = cnpjPorEmpresa.get(emp) ? ` — CNPJ: ${cnpjPorEmpresa.get(emp)}` : '';
+                return `<option value="${emp}">${emp}${cnpjTxt}</option>`;
+            }).join('');
 
         pills.innerHTML = `<button type="button" class="emp-pill active" data-emp="__TODAS__" onclick="selecionarEmpresa('__TODAS__')">Todas (${empresas.length})</button>` +
             empresas.map(emp => `<button type="button" class="emp-pill" data-emp="${emp}" onclick="selecionarEmpresa('${emp}')">${emp}</button>`).join('');
 
-        empresaSelecionada = '__TODAS__';
+        if (empresaSelecionada !== '__TODAS__' && empresas.includes(empresaSelecionada)) {
+            selecionarEmpresa(empresaSelecionada);
+        } else {
+            empresaSelecionada = '__TODAS__';
+        }
     }
 
     function selecionarEmpresa(emp) {
