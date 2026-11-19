@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conferência Fiscal Inteligente</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <style>
         :root {
             --primary: #1d4ed8;
@@ -373,9 +374,12 @@
 
     <header class="header">
         <div class="header-content">
-            <div>
-                <h1>Conferência Fiscal</h1>
-                <p>Cruzamento automático entre Livro Fiscal (Entradas/Saídas) e Planilhas da Empresa</p>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="height: 54px; width: auto; border-radius: 10px;">
+                <div>
+                    <h1>Conferência Fiscal</h1>
+                    <p>Cruzamento automático entre Livro Fiscal (Entradas/Saídas) e Planilhas da Empresa</p>
+                </div>
             </div>
             <span class="header-badge">Auditoria Fiscal Automatizada</span>
         </div>
