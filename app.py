@@ -1,12 +1,153 @@
+import csv
 import os
 import re
 import tempfile
 from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
+from openpyxl import load_workbook
+from pypdf import PdfReader
+from odf.opendocument import load as load_ods
+from odf.table import Table, TableRow, TableCell
+from odf.teletype import extractText
 from services.file_reader import ler_arquivo_tabular, FileReadError
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
+CNPJ_FORMATADO_RE = re.compile(r'\b(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})\b')
+CNPJ_ROTULADO_RE = re.compile(r'(?:cnpj|cpf/cnpj|inscri[çc][ãa]o)[^\d]{0,18}(\d{14})\b', re.IGNORECASE)
+RAZAO_ROTULADA_RE = re.compile(
+    r'(?:empresa|raz[ãa]o\s*social|contribuinte|nome\s*empresarial|estabelecimento)\s*[:\-]\s*([^\n|;]{3,90})',
+    re.IGNORECASE
+)
+SUFIXO_EMPRESA_RE = re.compile(
+    r'\b([A-Z0-9À-Ú][A-Z0-9À-Ú\s&.,\-]{2,70}\b(?:LTDA|EIRELI|S/A|S\.A\.|ME|EPP|COMERCIO|COMÉRCIO|INDUSTRIA|INDÚSTRIA|SERVICOS|SERVIÇOS|DISTRIBUIDORA))\b'
+)
+
+
+def validar_cnpj(cnpj_digits: str) -> bool:
+    if len(cnpj_digits) != 14 or len(set(cnpj_digits)) == 1:
+        return False
+
+    pesos_1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    soma_1 = sum(int(d) * p for d, p in zip(cnpj_digits[:12], pesos_1))
+    resto_1 = soma_1 % 11
+    dig_1 = '0' if resto_1 < 2 else str(11 - resto_1)
+
+    pesos_2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    soma_2 = sum(int(d) * p for d, p in zip(cnpj_digits[:13], pesos_2))
+    resto_2 = soma_2 % 11
+    dig_2 = '0' if resto_2 < 2 else str(11 - resto_2)
+
+    return cnpj_digits[-2:] == dig_1 + dig_2
+
+
+def formatar_cnpj(cnpj_digits: str) -> str:
+    if len(cnpj_digits) != 14:
+        return cnpj_digits
+    return f"{cnpj_digits[:2]}.{cnpj_digits[2:5]}.{cnpj_digits[5:8]}/{cnpj_digits[8:12]}-{cnpj_digits[12:]}"
+
+
+def extrair_cabecalho_texto(caminho_temp: str, extensao: str, max_linhas: int = 25) -> str:
+    linhas = []
+    try:
+        if extensao == '.pdf':
+            reader = PdfReader(caminho_temp)
+            if reader.pages:
+                texto_p1 = reader.pages[0].extract_text() or ''
+                linhas = [l.strip() for l in texto_p1.splitlines() if l.strip()][:max_linhas]
+
+        elif extensao == '.xlsx':
+            wb = load_workbook(caminho_temp, read_only=True, data_only=True)
+            try:
+                ws = wb.active
+                for row in ws.iter_rows(max_row=max_linhas, values_only=True):
+                    vals = [str(c).strip() for c in row if c is not None and str(c).strip()]
+                    if vals:
+                        linhas.append(' | '.join(vals))
+            finally:
+                wb.close()
+
+        elif extensao == '.ods':
+            doc = load_ods(caminho_temp)
+            tabelas = doc.getElementsByType(Table)
+            if tabelas:
+                rows = tabelas[0].getElementsByType(TableRow)[:max_linhas]
+                for row in rows:
+                    vals = []
+                    for cell in row.getElementsByType(TableCell):
+                        txt = extractText(cell).strip()
+                        if txt:
+                            vals.append(txt)
+                    if vals:
+                        linhas.append(' | '.join(vals))
+
+        elif extensao == '.csv':
+            for enc in ('utf-8-sig', 'latin-1'):
+                try:
+                    with open(caminho_temp, 'r', encoding=enc, errors='strict') as f:
+                        reader = csv.reader(f, delimiter=';')
+                        for idx, row in enumerate(reader):
+                            if idx >= max_linhas:
+                                break
+                            vals = [c.strip() for c in row if c and c.strip()]
+                            if vals:
+                                linhas.append(' | '.join(vals))
+                    break
+                except UnicodeDecodeError:
+                    continue
+    except Exception:
+        pass
+
+    return '\n'.join(linhas)
+
+
+def extrair_identificacao(cabecalho_texto: str) -> dict:
+    if not cabecalho_texto:
+        return {'cnpj': '', 'cnpj_formatado': '', 'empresa_detectada': ''}
+
+    cnpj_valido = ''
+
+    # 1. Busca CNPJs formatados (XX.XXX.XXX/XXXX-XX)
+    for match in CNPJ_FORMATADO_RE.findall(cabecalho_texto):
+        digits = re.sub(r'\D', '', match)
+        if validar_cnpj(digits):
+            cnpj_valido = digits
+            break
+
+    # 2. Busca CNPJ rotulado sem pontuação (ex: CNPJ: 12345678000199)
+    if not cnpj_valido:
+        for match in CNPJ_ROTULADO_RE.findall(cabecalho_texto):
+            if validar_cnpj(match):
+                cnpj_valido = match
+                break
+
+    # 3. Tenta extrair Razão Social / Nome da Empresa
+    empresa_detectada = ''
+    m_rot = RAZAO_ROTULADA_RE.search(cabecalho_texto)
+    if m_rot:
+        cand = CNPJ_FORMATADO_RE.sub('', m_rot.group(1))
+        cand = re.sub(r'\b(?:cnpj|ie|inscri[çc][ãa]o|per[íi]odo|folha|p[áa]gina).*$', '', cand, flags=re.IGNORECASE)
+        cand = re.sub(r'\s+', ' ', cand).strip(' -:|')
+        if len(cand) >= 3 and not cand.isdigit():
+            empresa_detectada = cand.upper()
+
+    if not empresa_detectada:
+        for linha in cabecalho_texto.splitlines()[:15]:
+            linha_up = linha.upper()
+            m_suf = SUFIXO_EMPRESA_RE.search(linha_up)
+            if m_suf:
+                cand = CNPJ_FORMATADO_RE.sub('', m_suf.group(1))
+                cand = re.sub(r'\s+', ' ', cand).strip(' -:|')
+                if len(cand) >= 4:
+                    empresa_detectada = cand
+                    break
+
+    return {
+        'cnpj': cnpj_valido,
+        'cnpj_formatado': formatar_cnpj(cnpj_valido) if cnpj_valido else '',
+        'empresa_detectada': empresa_detectada
+    }
 
 
 def parse_valor_br(valor_raw) -> float:
@@ -187,12 +328,32 @@ def api_extrair():
 
     try:
         arquivo.save(caminho_temp)
-        registros_brutos = ler_arquivo_tabular(caminho_temp, modo_operacao=modo_operacao)
+
+        # Extrai cabeçalho das primeiras 25 linhas para auto-pareamento por CNPJ / Razão Social
+        cabecalho_texto = extrair_cabecalho_texto(caminho_temp, extensao, max_linhas=25)
+        identificacao = extrair_identificacao(cabecalho_texto)
+
+        resultado_leitura = ler_arquivo_tabular(caminho_temp, modo_operacao=modo_operacao)
+
+        # Suporta tanto retorno em lista quanto em dicionário vindo do file_reader
+        if isinstance(resultado_leitura, dict):
+            registros_brutos = resultado_leitura.get('registros', [])
+            cab_extra = resultado_leitura.get('cabecalho_texto', '')
+            if cab_extra and not identificacao['cnpj']:
+                cabecalho_texto = cab_extra
+                identificacao = extrair_identificacao(cabecalho_texto)
+        else:
+            registros_brutos = resultado_leitura
+
         registros_limpos = normalizar_registros(registros_brutos, extensao, modo_operacao)
 
         return jsonify({
             'sucesso': True,
             'arquivo': nome_original,
+            'cnpj': identificacao['cnpj'],
+            'cnpj_formatado': identificacao['cnpj_formatado'],
+            'empresa_detectada': identificacao['empresa_detectada'],
+            'cabecalho_texto': cabecalho_texto[:1500],
             'registros': registros_limpos
         })
     except FileReadError as e:
