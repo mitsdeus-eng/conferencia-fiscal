@@ -156,7 +156,7 @@
             gap: 8px;
         }
         .preview-itens {
-            max-height: 340px;
+            max-height: 360px;
             overflow-y: auto;
         }
         .preview-row {
@@ -174,6 +174,8 @@
             border-radius: 6px;
             font-size: 0.72rem;
             font-weight: 700;
+            cursor: pointer;
+            border: 1px solid transparent;
         }
         .tag-livro { background: #dbeafe; color: #1e40af; }
         .tag-plan { background: #e0e7ff; color: #3730a3; }
@@ -204,15 +206,14 @@
         .input-empresa, .select-vinculo {
             border: 1px solid #cbd5e1;
             border-radius: 6px;
-            padding: 4px 8px;
+            padding: 5px 8px;
             font-size: 0.82rem;
             font-weight: 700;
             color: var(--navy-dark);
             background: #ffffff;
-            text-transform: uppercase;
         }
-        .input-empresa { width: 190px; }
-        .select-vinculo { min-width: 240px; }
+        .input-empresa { width: 185px; text-transform: uppercase; }
+        .select-vinculo { min-width: 240px; max-width: 310px; cursor: pointer; }
 
         /* Progresso */
         .progress-box {
@@ -254,7 +255,7 @@
         /* Card de Revisão de Vínculos Pós-Extração */
         .vinculos-card {
             background: #ffffff;
-            border: 1px solid #cbd5e1;
+            border: 2px solid #cbd5e1;
             border-radius: 12px;
             margin-bottom: 20px;
             overflow: hidden;
@@ -272,35 +273,34 @@
             cursor: pointer;
         }
         .vinculos-header h4 {
-            font-size: 0.92rem;
+            font-size: 0.95rem;
             color: var(--navy-dark);
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             gap: 8px;
         }
         .vinculos-body {
-            padding: 14px 18px;
+            padding: 16px 18px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
-            gap: 16px;
+            gap: 18px;
         }
         .vinculos-col h5 {
             font-size: 0.78rem;
             text-transform: uppercase;
             color: var(--text-muted);
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             letter-spacing: 0.03em;
         }
         .vinculo-item {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
             gap: 8px;
-            padding: 8px 10px;
+            padding: 10px 12px;
             border: 1px solid var(--border);
             border-radius: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             background: #fcfdff;
             font-size: 0.82rem;
         }
@@ -308,11 +308,54 @@
             border-color: #f59e0b;
             background: #fffbeb;
         }
+        .vinculo-topo {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .vinculo-rodape {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            padding-top: 6px;
+            border-top: 1px dashed #e2e8f0;
+        }
+        .chip-planilha {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--ok-bg);
+            color: var(--ok-text);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+        .chip-planilha button {
+            background: none;
+            border: none;
+            color: #991b1b;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.78rem;
+        }
         .meta-cnpj {
             display: block;
             font-size: 0.74rem;
             color: var(--text-muted);
             margin-top: 2px;
+        }
+        .toast-vinculo {
+            display: none;
+            background: #ecfdf5;
+            color: #065f46;
+            border-bottom: 1px solid #a7f3d0;
+            padding: 8px 18px;
+            font-size: 0.82rem;
+            font-weight: 600;
         }
 
         .empresa-selector-bar {
@@ -498,7 +541,7 @@
         <!-- Pré-visualização da Fila antes do envio -->
         <div class="preview-lista" id="preview-lista">
             <div class="preview-header">
-                <span>Fila de Arquivos (Planilhas com nome genérico serão pareadas automaticamente pelo CNPJ na leitura)</span>
+                <span>Fila de Arquivos (Você pode vincular manualmente aqui ou após a leitura do CNPJ)</span>
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <span id="contador-arquivos">0 arquivos</span>
                     <button type="button" onclick="limparFila()" style="background:#fee2e2; color:#991b1b; border:none; padding:4px 10px; border-radius:6px; font-size:0.78rem; font-weight:700; cursor:pointer;">
@@ -525,24 +568,25 @@
 
     <!-- Painel de Resultados Persistente com Revisão de Vínculos e Troca de Empresa -->
     <div id="painel-resultados">
-        <!-- Revisão de Pareamento PDF <-> Planilha (pós-leitura de CNPJ/Cabeçalho) -->
+        <!-- Revisão de Pareamento PDF <-> Planilha -->
         <div class="vinculos-card" id="vinculos-card">
             <div class="vinculos-header" onclick="togglePainelVinculos()">
                 <h4>
-                    <span>Pareamento PDF ↔ Planilha (CNPJ & Cabeçalho)</span>
+                    <span>Pareamento PDF ↔ Planilha (Automático via CNPJ ou Manual)</span>
                     <span id="resumo-vinculos-badge" class="badge-match-ok">0 pareados</span>
                 </h4>
                 <span id="toggle-vinculos-label" style="font-size: 0.8rem; font-weight: 600; color: var(--navy-mid);">
                     Ocultar ▲
                 </span>
             </div>
+            <div class="toast-vinculo" id="toast-vinculo"></div>
             <div class="vinculos-body" id="vinculos-body">
                 <div class="vinculos-col">
-                    <h5>Livros Fiscais (PDFs) — Nome da Empresa & CNPJ Lido</h5>
+                    <h5>1. Livros Fiscais (PDFs) — Vincule planilhas diretamente ou renomeie</h5>
                     <div id="lista-vinculos-livros"></div>
                 </div>
                 <div class="vinculos-col">
-                    <h5>Planilhas — Vínculo Automático ou Manual</h5>
+                    <h5>2. Planilhas — Escolha o PDF / Empresa correspondente</h5>
                     <div id="lista-vinculos-planilhas"></div>
                 </div>
             </div>
@@ -621,8 +665,9 @@
 </div>
 
 <script>
-    let filaArquivos = []; // { file, origem: 'livro'|'planilha', tokens: [], empresa: string, pareado: boolean, manual: boolean }
-    let arquivosProcessados = []; // Guarda os dados extraídos + CNPJ/cabeçalho de cada arquivo
+    let nextUid = 1;
+    let filaArquivos = []; // { uid, file, origem: 'livro'|'planilha', tokens: [], empresa: string, pareado: boolean, manual: boolean }
+    let arquivosProcessados = [];
     let dadosExtraidos = [];
     let empresaSelecionada = '__TODAS__';
     let filtroStatusAtual = 'TODOS';
@@ -641,6 +686,15 @@
         'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
         'TESTE', 'ARQUIVO', 'PLAN', 'LIV', 'LF', 'PDF', 'XLSX', 'XLS', 'CSV', 'ODS'
     ]);
+
+    function escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&')
+            .replace(/</g, '<')
+            .replace(/>/g, '>')
+            .replace(/"/g, '"')
+            .replace(/'/g, ''');
+    }
 
     document.getElementById('input-livros').addEventListener('change', function(e) {
         adicionarArquivosNaFila(e.target.files, 'livro');
@@ -663,13 +717,12 @@
         let base = nomeArquivo.replace(/\.[^/.]+$/, '');
         base = normalizarTexto(base);
         const partes = base.split(/[^A-Z0-9]+/).filter(Boolean);
-        const tokens = partes.filter(p => {
+        return partes.filter(p => {
             if (STOPWORDS.has(p)) return false;
-            if (/^\d+$/.test(p)) return false; // ignora números puros (01, 2026)
-            if (/^[A-Z]{1,3}\d{5,}$/.test(p)) return false; // ignora códigos gerados pelo sistema (ex: LF0079181126165846)
+            if (/^\d+$/.test(p)) return false;
+            if (/^[A-Z]{1,3}\d{5,}$/.test(p)) return false;
             return true;
         });
-        return tokens;
     }
 
     function calcularSimilaridade(tokensA, tokensB) {
@@ -692,7 +745,9 @@
 
         livros.forEach(liv => {
             if (!liv.manual) {
-                liv.empresa = liv.tokens.length ? liv.tokens.join(' ') : liv.file.name.replace(/\.[^/.]+$/, '').toUpperCase();
+                liv.empresa = liv.tokens.length
+                    ? liv.tokens.join(' ')
+                    : liv.file.name.replace(/\.[^/.]+$/, '').toUpperCase();
             }
             liv.pareado = false;
         });
@@ -707,7 +762,7 @@
 
         planilhas.forEach(pla => {
             if (pla.manual) {
-                pla.pareado = livros.some(l => l.empresa === pla.empresa);
+                pla.pareado = Boolean(pla.empresa) && livros.some(l => l.empresa === pla.empresa);
                 if (pla.pareado) {
                     livros.filter(l => l.empresa === pla.empresa).forEach(l => l.pareado = true);
                 }
@@ -715,7 +770,9 @@
             }
 
             if (livros.length === 0) {
-                pla.empresa = pla.tokens.length ? pla.tokens.join(' ') : pla.file.name.replace(/\.[^/.]+$/, '').toUpperCase();
+                pla.empresa = pla.tokens.length
+                    ? pla.tokens.join(' ')
+                    : pla.file.name.replace(/\.[^/.]+$/, '').toUpperCase();
                 pla.pareado = false;
                 return;
             }
@@ -743,7 +800,7 @@
                 pla.pareado = true;
                 melhorLivro.pareado = true;
             } else {
-                pla.empresa = ''; // Será resolvido automaticamente via CNPJ no backend!
+                pla.empresa = '';
                 pla.pareado = false;
             }
         });
@@ -756,6 +813,7 @@
             if (!jaExiste) {
                 const tokens = extrairTokensLimpos(f.name);
                 filaArquivos.push({
+                    uid: 'f_' + (nextUid++),
                     file: f,
                     origem: origem,
                     tokens: tokens,
@@ -769,14 +827,27 @@
         renderizarFilaArquivos();
     }
 
-    function alterarEmpresaLivro(idx, novoNome) {
-        const nomeLimpo = novoNome.trim().toUpperCase() || 'GERAL';
-        const antigoNome = filaArquivos[idx].empresa;
-        filaArquivos[idx].empresa = nomeLimpo;
-        filaArquivos[idx].manual = true;
+    function alternarOrigemFila(uid) {
+        const item = filaArquivos.find(f => f.uid === uid);
+        if (!item) return;
+        item.origem = item.origem === 'livro' ? 'planilha' : 'livro';
+        item.manual = false;
+        item.empresa = '';
+        recalcularPareamentoPreFila();
+        renderizarFilaArquivos();
+    }
 
+    function alterarEmpresaLivro(uid, novoNome) {
+        const liv = filaArquivos.find(f => f.uid === uid);
+        if (!liv) return;
+        const nomeLimpo = novoNome.trim().toUpperCase() || 'GERAL';
+        const antigoNome = liv.empresa;
+        liv.empresa = nomeLimpo;
+        liv.manual = true;
+
+        // Mantém sincronizadas tanto as planilhas automáticas quanto as vinculadas manualmente a esse nome
         filaArquivos.forEach(item => {
-            if (item.origem === 'planilha' && !item.manual && item.empresa === antigoNome) {
+            if (item.origem === 'planilha' && item.empresa === antigoNome) {
                 item.empresa = nomeLimpo;
             }
         });
@@ -784,20 +855,22 @@
         renderizarFilaArquivos();
     }
 
-    function vincularPlanilhaPreFila(idxPlanilha, empresaDestino) {
+    function vincularPlanilhaPreFila(uidPlanilha, empresaDestino) {
+        const pla = filaArquivos.find(f => f.uid === uidPlanilha);
+        if (!pla) return;
         if (!empresaDestino) {
-            filaArquivos[idxPlanilha].empresa = '';
-            filaArquivos[idxPlanilha].manual = false;
+            pla.empresa = '';
+            pla.manual = false;
         } else {
-            filaArquivos[idxPlanilha].empresa = empresaDestino;
-            filaArquivos[idxPlanilha].manual = true;
+            pla.empresa = empresaDestino;
+            pla.manual = true;
         }
         recalcularPareamentoPreFila();
         renderizarFilaArquivos();
     }
 
-    function removerDaFila(idx) {
-        filaArquivos.splice(idx, 1);
+    function removerDaFila(uid) {
+        filaArquivos = filaArquivos.filter(f => f.uid !== uid);
         recalcularPareamentoPreFila();
         renderizarFilaArquivos();
     }
@@ -822,20 +895,20 @@
         ));
 
         box.style.display = 'block';
-        container.innerHTML = filaArquivos.map((item, idx) => {
+        container.innerHTML = filaArquivos.map(item => {
             if (item.origem === 'livro') {
                 return `
                     <div class="preview-row">
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="tag-tipo tag-livro">PDF LIVRO</span>
-                            <span style="font-weight:600;">${item.file.name}</span>
+                            <button type="button" class="tag-tipo tag-livro" data-uid="${item.uid}" onclick="alternarOrigemFila(this.dataset.uid)" title="Clique para alternar entre PDF Livro e Planilha">PDF LIVRO ⇄</button>
+                            <span style="font-weight:600;">${escapeHtml(item.file.name)}</span>
                             ${item.pareado ? '<span class="badge-match-ok">✓ Com planilha</span>' : '<span class="badge-match-info">Lê CNPJ ao processar</span>'}
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span style="color:#64748b; font-size:0.78rem;">Empresa:</span>
-                            <input type="text" class="input-empresa" value="${item.empresa}"
-                                   onchange="alterarEmpresaLivro(${idx}, this.value)">
-                            <button type="button" onclick="removerDaFila(${idx})" title="Remover arquivo"
+                            <input type="text" class="input-empresa" data-uid="${item.uid}" value="${escapeHtml(item.empresa)}"
+                                   onchange="alterarEmpresaLivro(this.dataset.uid, this.value)">
+                            <button type="button" data-uid="${item.uid}" onclick="removerDaFila(this.dataset.uid)" title="Remover arquivo"
                                     style="background:none; border:none; color:#dc2626; font-weight:700; cursor:pointer; font-size:0.95rem; padding:0 4px;">
                                 ✕
                             </button>
@@ -845,22 +918,22 @@
             } else {
                 const optionsHtml = `<option value="">-- Auto-parear por CNPJ na leitura --</option>` +
                     empresasLivros.map(emp =>
-                        `<option value="${emp}" ${emp === item.empresa ? 'selected' : ''}>${emp}</option>`
+                        `<option value="${escapeHtml(emp)}" ${emp === item.empresa ? 'selected' : ''}>${escapeHtml(emp)}</option>`
                     ).join('');
 
                 return `
                     <div class="preview-row" style="background:#fafbff;">
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="tag-tipo tag-plan">PLANILHA</span>
-                            <span>${item.file.name}</span>
-                            ${item.pareado ? '<span class="badge-match-ok">✓ Pareada pelo nome</span>' : '<span class="badge-match-info">Auto-pareia via CNPJ</span>'}
+                            <button type="button" class="tag-tipo tag-plan" data-uid="${item.uid}" onclick="alternarOrigemFila(this.dataset.uid)" title="Clique para alternar entre Planilha e PDF Livro">PLANILHA ⇄</button>
+                            <span>${escapeHtml(item.file.name)}</span>
+                            ${item.pareado ? `<span class="badge-match-ok">✓ ${item.manual ? 'Vinculada manualmente' : 'Pareada pelo nome'}</span>` : '<span class="badge-match-info">Auto-pareia via CNPJ</span>'}
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="color:#64748b; font-size:0.78rem;">PDF:</span>
-                            <select class="select-vinculo" onchange="vincularPlanilhaPreFila(${idx}, this.value)">
+                            <span style="color:#64748b; font-size:0.78rem;">PDF / Empresa:</span>
+                            <select class="select-vinculo" data-uid="${item.uid}" onchange="vincularPlanilhaPreFila(this.dataset.uid, this.value)">
                                 ${optionsHtml}
                             </select>
-                            <button type="button" onclick="removerDaFila(${idx})" title="Remover arquivo"
+                            <button type="button" data-uid="${item.uid}" onclick="removerDaFila(this.dataset.uid)" title="Remover arquivo"
                                     style="background:none; border:none; color:#dc2626; font-weight:700; cursor:pointer; font-size:0.95rem; padding:0 4px;">
                                 ✕
                             </button>
@@ -910,10 +983,10 @@
                 const json = await resp.json();
 
                 if (!resp.ok || !json.sucesso) {
-                    erros.push(`• <strong>${item.file.name}</strong>: ${json.erro || 'Falha na leitura'}`);
+                    erros.push(`• <strong>${escapeHtml(item.file.name)}</strong>: ${escapeHtml(json.erro || 'Falha na leitura')}`);
                 } else {
                     arquivosProcessados.push({
-                        id: i,
+                        uid: item.uid,
                         nomeArquivo: item.file.name,
                         origem: item.origem,
                         tokensNome: item.tokens,
@@ -930,7 +1003,7 @@
                     });
                 }
             } catch (err) {
-                erros.push(`• <strong>${item.file.name}</strong>: Erro de rede (${err.message})`);
+                erros.push(`• <strong>${escapeHtml(item.file.name)}</strong>: Erro de rede (${escapeHtml(err.message)})`);
             }
         }
 
@@ -956,7 +1029,6 @@
         const livros = arquivosProcessados.filter(a => a.origem === 'livro');
         const planilhas = arquivosProcessados.filter(a => a.origem === 'planilha');
 
-        // 1. Define o nome final de cada PDF e unifica PDFs que tenham o mesmo CNPJ (ex: Entradas + Saídas)
         const cnpjParaEmpresa = new Map();
 
         livros.forEach(liv => {
@@ -978,9 +1050,7 @@
             }
         });
 
-        // 2. Pareia cada Planilha aos Livros usando: (1) Manual, (2) CNPJ exato, (3) Cabeçalho/Razão Social, (4) Nome do arquivo
         planilhas.forEach(pla => {
-            // Caso 1: Vínculo manual feito na pré-fila
             if (pla.manualInicial && pla.empresaInicial) {
                 const alvo = livros.find(l => l.empresaFinal === pla.empresaInicial || l.empresaInicial === pla.empresaInicial);
                 if (alvo) {
@@ -991,7 +1061,6 @@
                 }
             }
 
-            // Caso 2: Match exato por CNPJ extraído das primeiras 25 linhas
             if (pla.cnpj) {
                 const matchCnpj = livros.find(l => l.cnpj && l.cnpj === pla.cnpj);
                 if (matchCnpj) {
@@ -1002,7 +1071,6 @@
                 }
             }
 
-            // Caso 3: Match por Razão Social / Cabeçalho lido dentro da planilha vs PDF
             const cabPlanNorm = normalizarTexto(pla.empresaDetectada + ' ' + pla.cabecalhoTexto);
             if (cabPlanNorm.trim().length > 5) {
                 let melhorLivro = null;
@@ -1033,7 +1101,6 @@
                 }
             }
 
-            // Caso 4: Match pelo nome do arquivo (caso já tivesse batido na pré-fila)
             if (pla.empresaInicial) {
                 const matchNome = livros.find(l => l.empresaFinal === pla.empresaInicial || l.empresaInicial === pla.empresaInicial);
                 if (matchNome) {
@@ -1044,12 +1111,9 @@
                 }
             }
 
-            // Caso 5: Não encontrou par (planilha genérica sem CNPJ compatível)
             pla.pareado = false;
             pla.motivoPareamento = 'Pendente de vínculo';
-            pla.empresaFinal = pla.empresaDetectada
-                ? pla.empresaDetectada.split(' ').slice(0, 3).join(' ')
-                : `SEM VÍNCULO (${pla.nomeArquivo})`;
+            pla.empresaFinal = `SEM VÍNCULO (${pla.nomeArquivo})`;
         });
     }
 
@@ -1070,17 +1134,27 @@
         });
     }
 
+    function mostrarToastVinculo(msg) {
+        const toast = document.getElementById('toast-vinculo');
+        toast.textContent = msg;
+        toast.style.display = 'block';
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+            toast.style.display = 'none';
+        }, 4000);
+    }
+
     function togglePainelVinculos() {
         painelVinculosAberto = !painelVinculosAberto;
         document.getElementById('vinculos-body').style.display = painelVinculosAberto ? 'grid' : 'none';
         document.getElementById('toggle-vinculos-label').textContent = painelVinculosAberto ? 'Ocultar ▲' : 'Revisar / Ajustar ▼';
     }
 
-    function renomearEmpresaPosLeitura(idArquivo, novoNome) {
+    function renomearEmpresaPosLeitura(uidArquivo, novoNome) {
         const nomeLimpo = novoNome.trim().toUpperCase();
         if (!nomeLimpo) return;
 
-        const arqAlvo = arquivosProcessados.find(a => a.id === idArquivo);
+        const arqAlvo = arquivosProcessados.find(a => a.uid === uidArquivo);
         if (!arqAlvo) return;
 
         const nomeAntigo = arqAlvo.empresaFinal;
@@ -1090,24 +1164,31 @@
             }
         });
 
+        if (empresaSelecionada === nomeAntigo) {
+            empresaSelecionada = nomeLimpo;
+        }
+
         reconstruirDadosConsolidados();
         renderizarPainelVinculos();
         montarSeletorEmpresas();
         renderizarTabela();
+        mostrarToastVinculo(`✓ Empresa renomeada para "${nomeLimpo}" e tabela atualizada.`);
     }
 
-    function alterarVinculoPlanilhaPosLeitura(idPlanilha, novaEmpresa) {
-        const pla = arquivosProcessados.find(a => a.id === idPlanilha);
+    function alterarVinculoPlanilhaPosLeitura(uidPlanilha, novaEmpresa) {
+        const pla = arquivosProcessados.find(a => a.uid === uidPlanilha);
         if (!pla) return;
 
-        if (novaEmpresa === '__SEM_VINCULO__') {
+        if (!novaEmpresa || novaEmpresa === '__SEM_VINCULO__') {
             pla.pareado = false;
             pla.motivoPareamento = 'Sem vínculo';
             pla.empresaFinal = `SEM VÍNCULO (${pla.nomeArquivo})`;
+            mostrarToastVinculo(`Vínculo removido de "${pla.nomeArquivo}".`);
         } else {
             pla.pareado = true;
             pla.motivoPareamento = 'Manual';
             pla.empresaFinal = novaEmpresa;
+            mostrarToastVinculo(`✓ "${pla.nomeArquivo}" vinculada a "${novaEmpresa}" — KPIs e tabela recalculados!`);
         }
 
         reconstruirDadosConsolidados();
@@ -1132,7 +1213,7 @@
             badge.textContent = `✓ Todas as ${qtdPareadas} planilha(s) vinculadas`;
         }
 
-        // Lista de PDFs (Livros)
+        // 1. Lista de PDFs (Livros) com vinculação direta de planilhas
         const divLivros = document.getElementById('lista-vinculos-livros');
         divLivros.innerHTML = livros.map(liv => {
             const infoExtra = [
@@ -1140,25 +1221,48 @@
                 liv.empresaDetectada ? liv.empresaDetectada : ''
             ].filter(Boolean).join(' • ');
 
+            const planilhasVinculadas = planilhas.filter(p => p.pareado && p.empresaFinal === liv.empresaFinal);
+            const planilhasOutras = planilhas.filter(p => !(p.pareado && p.empresaFinal === liv.empresaFinal));
+
+            const chipsHtml = planilhasVinculadas.map(p => `
+                <span class="chip-planilha">
+                    ✓ ${escapeHtml(p.nomeArquivo)}
+                    <button type="button" data-uid="${p.uid}" onclick="alterarVinculoPlanilhaPosLeitura(this.dataset.uid, '__SEM_VINCULO__')" title="Desvincular planilha">✕</button>
+                </span>
+            `).join('');
+
+            const selectAddPlanilha = planilhasOutras.length > 0 ? `
+                <select class="select-vinculo" style="min-width:190px; font-weight:600;"
+                        onchange="if(this.value) alterarVinculoPlanilhaPosLeitura(this.value, '${escapeHtml(liv.empresaFinal)}')">
+                    <option value="">+ Vincular planilha...</option>
+                    ${planilhasOutras.map(p => `<option value="${p.uid}">${escapeHtml(p.nomeArquivo)}${p.pareado ? ' (atual: ' + escapeHtml(p.empresaFinal) + ')' : ''}</option>`).join('')}
+                </select>
+            ` : '';
+
             return `
                 <div class="vinculo-item">
-                    <div>
-                        <strong>${liv.nomeArquivo}</strong>
-                        <span class="meta-cnpj">${infoExtra}</span>
+                    <div class="vinculo-topo">
+                        <div>
+                            <strong>${escapeHtml(liv.nomeArquivo)}</strong>
+                            <span class="meta-cnpj">${escapeHtml(infoExtra)}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:0.75rem; color:#64748b;">Empresa:</span>
+                            <input type="text" class="input-empresa" data-uid="${liv.uid}" value="${escapeHtml(liv.empresaFinal)}"
+                                   onchange="renomearEmpresaPosLeitura(this.dataset.uid, this.value)">
+                        </div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:6px;">
-                        <span style="font-size:0.75rem; color:#64748b;">Empresa:</span>
-                        <input type="text" class="input-empresa" value="${liv.empresaFinal}"
-                               onchange="renomearEmpresaPosLeitura(${liv.id}, this.value)">
+                    <div class="vinculo-rodape">
+                        ${chipsHtml || '<span style="font-size:0.75rem; color:#92400e;">Nenhuma planilha vinculada</span>'}
+                        ${selectAddPlanilha}
                     </div>
                 </div>
             `;
         }).join('') || '<div style="font-size:0.82rem; color:#64748b;">Nenhum PDF carregado.</div>';
 
-        // Opções de empresas dos PDFs para o dropdown das planilhas
+        // 2. Lista de Planilhas
         const empresasDisponiveis = Array.from(new Set(livros.map(l => l.empresaFinal))).sort();
 
-        // Lista de Planilhas
         const divPlanilhas = document.getElementById('lista-vinculos-planilhas');
         divPlanilhas.innerHTML = planilhas.map(pla => {
             const infoExtra = [
@@ -1168,24 +1272,26 @@
 
             const optionsHtml = `<option value="__SEM_VINCULO__" ${!pla.pareado ? 'selected' : ''}>-- Não vincular (manter separada) --</option>` +
                 empresasDisponiveis.map(emp =>
-                    `<option value="${emp}" ${pla.pareado && pla.empresaFinal === emp ? 'selected' : ''}>${emp}</option>`
+                    `<option value="${escapeHtml(emp)}" ${pla.pareado && pla.empresaFinal === emp ? 'selected' : ''}>${escapeHtml(emp)}</option>`
                 ).join('');
 
             return `
                 <div class="vinculo-item ${pla.pareado ? '' : 'pendente'}">
-                    <div>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <strong>${pla.nomeArquivo}</strong>
-                            <span class="${pla.pareado ? 'badge-match-ok' : 'badge-match-warn'}">
-                                ${pla.pareado ? '✓ ' + pla.motivoPareamento : '⚠ Vincular PDF'}
-                            </span>
+                    <div class="vinculo-topo">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                <strong>${escapeHtml(pla.nomeArquivo)}</strong>
+                                <span class="${pla.pareado ? 'badge-match-ok' : 'badge-match-warn'}">
+                                    ${pla.pareado ? '✓ ' + escapeHtml(pla.motivoPareamento) : '⚠ Vincular PDF'}
+                                </span>
+                            </div>
+                            <span class="meta-cnpj">${escapeHtml(infoExtra)}</span>
                         </div>
-                        <span class="meta-cnpj">${infoExtra}</span>
-                    </div>
-                    <div>
-                        <select class="select-vinculo" onchange="alterarVinculoPlanilhaPosLeitura(${pla.id}, this.value)">
-                            ${optionsHtml}
-                        </select>
+                        <div>
+                            <select class="select-vinculo" data-uid="${pla.uid}" onchange="alterarVinculoPlanilhaPosLeitura(this.dataset.uid, this.value)">
+                                ${optionsHtml}
+                            </select>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1199,7 +1305,6 @@
         const select = document.getElementById('select-empresa');
         const pills = document.getElementById('empresa-pills');
 
-        // Monta mapa de CNPJ por empresa para exibir bonito no seletor
         const cnpjPorEmpresa = new Map();
         arquivosProcessados.forEach(a => {
             if (a.empresaFinal && a.cnpjFormatado && !cnpjPorEmpresa.has(a.empresaFinal)) {
@@ -1210,11 +1315,11 @@
         select.innerHTML = `<option value="__TODAS__">TODAS AS EMPRESAS (${empresas.length} empresas)</option>` +
             empresas.map(emp => {
                 const cnpjTxt = cnpjPorEmpresa.get(emp) ? ` — CNPJ: ${cnpjPorEmpresa.get(emp)}` : '';
-                return `<option value="${emp}">${emp}${cnpjTxt}</option>`;
+                return `<option value="${escapeHtml(emp)}">${escapeHtml(emp + cnpjTxt)}</option>`;
             }).join('');
 
         pills.innerHTML = `<button type="button" class="emp-pill active" data-emp="__TODAS__" onclick="selecionarEmpresa('__TODAS__')">Todas (${empresas.length})</button>` +
-            empresas.map(emp => `<button type="button" class="emp-pill" data-emp="${emp}" onclick="selecionarEmpresa('${emp}')">${emp}</button>`).join('');
+            empresas.map(emp => `<button type="button" class="emp-pill" data-emp="${escapeHtml(emp)}" onclick="selecionarEmpresa(this.dataset.emp)">${escapeHtml(emp)}</button>`).join('');
 
         if (empresaSelecionada !== '__TODAS__' && empresas.includes(empresaSelecionada)) {
             selecionarEmpresa(empresaSelecionada);
@@ -1341,15 +1446,15 @@
 
             return `
                 <tr>
-                    <td><span class="badge-emp">${l.empresa}</span></td>
-                    <td>${l.data}</td>
-                    <td style="font-weight:700;">${l.nota}</td>
-                    <td><span class="badge-cfop">${l.cfop}</span></td>
+                    <td><span class="badge-emp">${escapeHtml(l.empresa)}</span></td>
+                    <td>${escapeHtml(l.data)}</td>
+                    <td style="font-weight:700;">${escapeHtml(l.nota)}</td>
+                    <td><span class="badge-cfop">${escapeHtml(l.cfop)}</span></td>
                     <td style="font-weight:600;">${formatarMoeda(l.valLiv)}</td>
                     <td style="font-weight:600;">${formatarMoeda(l.valPla)}</td>
                     <td style="font-weight:700; color:${Math.abs(l.diff) > 0.02 ? '#b91c1c' : '#166534'};">${formatarMoeda(l.diff)}</td>
-                    <td><span class="status-pill ${stClass}">${l.status}</span></td>
-                    <td style="color:#475569; font-size:0.82rem;">${l.diag}</td>
+                    <td><span class="status-pill ${stClass}">${escapeHtml(l.status)}</span></td>
+                    <td style="color:#475569; font-size:0.82rem;">${escapeHtml(l.diag)}</td>
                 </tr>
             `;
         }).join('');
