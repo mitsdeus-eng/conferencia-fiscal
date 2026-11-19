@@ -348,6 +348,28 @@
             color: var(--text-muted);
             margin-top: 2px;
         }
+        .btn-debug-cab {
+            background: none;
+            border: none;
+            color: var(--navy-mid);
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-left: 6px;
+        }
+        .box-debug-cab {
+            display: none;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.72rem;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
         .toast-vinculo {
             display: none;
             background: #ecfdf5;
@@ -666,7 +688,7 @@
 
 <script>
     let nextUid = 1;
-    let filaArquivos = []; // { uid, file, origem: 'livro'|'planilha', tokens: [], empresa: string, livroUidVinculado: string, pareado: boolean, manual: boolean }
+    let filaArquivos = [];
     let arquivosProcessados = [];
     let dadosExtraidos = [];
     let empresaSelecionada = '__TODAS__';
@@ -959,7 +981,6 @@
     }
 
     async function iniciarFilaConferencia() {
-        // Fallback: se o usuário selecionou arquivos mas a fila ainda estiver vazia, lê direto dos inputs
         if (filaArquivos.length === 0) {
             const filesLiv = document.getElementById('input-livros').files;
             const filesPla = document.getElementById('input-planilhas').files;
@@ -1074,7 +1095,6 @@
         });
 
         planilhas.forEach(pla => {
-            // 1. Vínculo manual feito na pré-fila pelo UID do livro
             if (pla.manualInicial && pla.livroUidVinculado) {
                 const alvo = livros.find(l => l.uid === pla.livroUidVinculado);
                 if (alvo) {
@@ -1085,7 +1105,6 @@
                 }
             }
 
-            // 2. Match exato por CNPJ extraído do cabeçalho
             if (pla.cnpj) {
                 const matchCnpj = livros.find(l => l.cnpj && l.cnpj === pla.cnpj);
                 if (matchCnpj) {
@@ -1097,7 +1116,6 @@
                 }
             }
 
-            // 3. Match por Razão Social / Cabeçalho lido dentro da planilha vs PDF
             const cabPlanNorm = normalizarTexto(pla.empresaDetectada + ' ' + pla.cabecalhoTexto);
             if (cabPlanNorm.trim().length > 5) {
                 let melhorLivro = null;
@@ -1129,7 +1147,6 @@
                 }
             }
 
-            // 4. Match pelo nome do arquivo (caso já tivesse batido na pré-fila)
             if (pla.empresaInicial) {
                 const matchNome = livros.find(l => l.empresaFinal === pla.empresaInicial || l.empresaInicial === pla.empresaInicial);
                 if (matchNome) {
@@ -1141,7 +1158,6 @@
                 }
             }
 
-            // 5. Pendente
             pla.pareado = false;
             pla.livroUidVinculado = '';
             pla.motivoPareamento = 'Pendente de vínculo';
@@ -1180,6 +1196,12 @@
         painelVinculosAberto = !painelVinculosAberto;
         document.getElementById('vinculos-body').style.display = painelVinculosAberto ? 'grid' : 'none';
         document.getElementById('toggle-vinculos-label').textContent = painelVinculosAberto ? 'Ocultar ▲' : 'Revisar / Ajustar ▼';
+    }
+
+    function toggleCabecalhoDebug(uid) {
+        const el = document.getElementById('debug_' + uid);
+        if (!el) return;
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
     }
 
     function renomearEmpresaPosLeitura(uidArquivo, novoNome) {
@@ -1252,10 +1274,11 @@
         // 1. Lista de PDFs (Livros)
         const divLivros = document.getElementById('lista-vinculos-livros');
         divLivros.innerHTML = livros.map(liv => {
-            const infoExtra = [
-                liv.cnpjFormatado ? `CNPJ: ${liv.cnpjFormatado}` : 'CNPJ não detectado',
-                liv.empresaDetectada ? liv.empresaDetectada : ''
-            ].filter(Boolean).join(' • ');
+            const statusCnpj = liv.cnpjFormatado
+                ? `CNPJ: ${liv.cnpjFormatado}`
+                : (!liv.cabecalhoTexto ? 'PDF sem texto (escaneado)' : 'CNPJ não encontrado no texto');
+
+            const infoExtra = [statusCnpj, liv.empresaDetectada].filter(Boolean).join(' • ');
 
             const planilhasVinculadas = planilhas.filter(p => p.pareado && p.empresaFinal === liv.empresaFinal);
             const planilhasOutras = planilhas.filter(p => !(p.pareado && p.empresaFinal === liv.empresaFinal));
@@ -1280,7 +1303,10 @@
                     <div class="vinculo-topo">
                         <div>
                             <strong>${escapeHtml(liv.nomeArquivo)}</strong>
-                            <span class="meta-cnpj">${escapeHtml(infoExtra)}</span>
+                            <span class="meta-cnpj">
+                                ${escapeHtml(infoExtra)}
+                                <button type="button" class="btn-debug-cab" data-uid="${liv.uid}" onclick="toggleCabecalhoDebug(this.dataset.uid)">Ver texto lido</button>
+                            </span>
                         </div>
                         <div style="display:flex; align-items:center; gap:6px;">
                             <span style="font-size:0.75rem; color:#64748b;">Empresa:</span>
@@ -1288,6 +1314,7 @@
                                    onchange="renomearEmpresaPosLeitura(this.dataset.uid, this.value)">
                         </div>
                     </div>
+                    <pre class="box-debug-cab" id="debug_${liv.uid}">${escapeHtml(liv.cabecalhoTexto || '(Nenhum texto extraído deste PDF)')}</pre>
                     <div class="vinculo-rodape">
                         ${chipsHtml || '<span style="font-size:0.75rem; color:#92400e;">Nenhuma planilha vinculada</span>'}
                         ${selectAddPlanilha}
@@ -1320,7 +1347,10 @@
                                     ${pla.pareado ? '✓ ' + escapeHtml(pla.motivoPareamento) : '⚠ Vincular PDF'}
                                 </span>
                             </div>
-                            <span class="meta-cnpj">${escapeHtml(infoExtra)}</span>
+                            <span class="meta-cnpj">
+                                ${escapeHtml(infoExtra)}
+                                <button type="button" class="btn-debug-cab" data-uid="${pla.uid}" onclick="toggleCabecalhoDebug(this.dataset.uid)">Ver texto lido</button>
+                            </span>
                         </div>
                         <div>
                             <select class="select-vinculo" data-uid="${pla.uid}" onchange="vincularPorLivroUid(this.dataset.uid, this.value)">
@@ -1328,6 +1358,7 @@
                             </select>
                         </div>
                     </div>
+                    <pre class="box-debug-cab" id="debug_${pla.uid}">${escapeHtml(pla.cabecalhoTexto || '(Sem cabeçalho textual)')}</pre>
                 </div>
             `;
         }).join('') || '<div style="font-size:0.82rem; color:#64748b;">Nenhuma planilha carregada.</div>';
