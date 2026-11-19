@@ -3,51 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conferência Fiscal Inteligente</title>
+    <title>Conferência Fiscal | Auditoria Automatizada</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <style>
         :root {
-            --primary: #1d4ed8;
-            --primary-hover: #1e40af;
-            --navy-dark: #0f172a;
+            --navy-dark: #14244b;
             --navy-mid: #1e3a8a;
             --bg-page: #f1f5f9;
             --card-bg: #ffffff;
-            --text-main: #1e293b;
+            --text-main: #0f172a;
             --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --success-bg: #dcfce7;
-            --success-text: #166534;
-            --danger-bg: #fee2e2;
-            --danger-text: #991b1b;
-            --warning-bg: #fef3c7;
-            --warning-text: #92400e;
+            --border: #e2e8f0;
+            --ok-bg: #dcfce7;
+            --ok-text: #166534;
+            --warn-bg: #fef3c7;
+            --warn-text: #92400e;
+            --err-bg: #fee2e2;
+            --err-text: #991b1b;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg-page); color: var(--text-main); padding-bottom: 60px; }
 
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
-            background-color: var(--bg-page);
-            color: var(--text-main);
-            line-height: 1.5;
-        }
-
-        /* Cabeçalho */
         .header {
-            background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-mid) 100%);
+            background: linear-gradient(135deg, var(--navy-dark) 0%, #0f172a 100%);
             color: #ffffff;
-            padding: 28px 20px;
+            padding: 26px 20px;
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-            margin-bottom: 30px;
+            margin-bottom: 28px;
         }
-
         .header-content {
-            max-width: 1050px;
+            max-width: 1180px;
             margin: 0 auto;
             display: flex;
             flex-wrap: wrap;
@@ -55,474 +41,764 @@
             align-items: center;
             gap: 12px;
         }
-
-        .header h1 {
-            font-size: 1.65rem;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 4px;
-        }
-
-        .header p {
-            font-size: 0.9rem;
-            color: #cbd5e1;
-        }
-
+        .header h1 { font-size: 1.6rem; font-weight: 700; color: #ffffff; margin-bottom: 3px; }
+        .header p { font-size: 0.88rem; color: #cbd5e1; }
         .header-badge {
-            background-color: rgba(255, 255, 255, 0.15);
+            background-color: rgba(255, 255, 255, 0.14);
             border: 1px solid rgba(255, 255, 255, 0.25);
             color: #ffffff;
             padding: 6px 14px;
             border-radius: 999px;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 600;
         }
 
-        /* Container Principal */
-        .container {
-            max-width: 1050px;
-            margin: 0 auto 50px auto;
-            padding: 0 20px;
-        }
+        .container { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
 
-        /* Alertas */
-        .alert {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 24px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .alert-success {
-            background-color: var(--success-bg);
-            color: var(--success-text);
-            border-left: 5px solid #16a34a;
-        }
-
-        .alert-danger {
-            background-color: var(--danger-bg);
-            color: var(--danger-text);
-            border-left: 5px solid #dc2626;
-        }
-
-        .btn-dashboard {
-            background-color: var(--navy-dark);
-            color: #ffffff !important;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-
-        .btn-dashboard:hover {
-            background-color: #1e293b;
-        }
-
-        /* Cards */
         .card {
-            background-color: var(--card-bg);
+            background: var(--card-bg);
             border-radius: 14px;
-            padding: 28px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--border-color);
-            margin-bottom: 28px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
         }
 
-        .section-title {
-            font-size: 0.82rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--primary);
-            margin-bottom: 14px;
-            display: block;
-        }
-
-        .divider {
-            border: 0;
-            border-top: 1px solid var(--border-color);
-            margin: 24px 0;
-        }
-
-        /* Grid de Formulário */
-        .grid-2 {
+        .grid-upload {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 18px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
-        .grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-        }
-
-        @media (max-width: 768px) {
-            .grid-2, .grid-4 {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            font-weight: 600;
-            font-size: 0.88rem;
-            color: var(--text-main);
-            margin-bottom: 6px;
-        }
-
-        select, input[type="text"], input[type="date"], input[type="file"] {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 0.94rem;
-            color: var(--text-main);
-            background-color: #ffffff;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        select:focus, input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
-        }
-
-        .mode-select {
-            font-weight: 600;
-            border: 2px solid #93c5fd;
-            background-color: #eff6ff;
-            color: #1e3a8a;
-        }
-
-        .mode-hint {
-            background-color: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 0.86rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-        }
-
-        /* Caixas de Upload */
         .upload-box {
             border: 2px dashed #cbd5e1;
-            border-radius: 10px;
-            padding: 18px;
-            background-color: #f8fafc;
-            transition: all 0.2s ease;
+            border-radius: 12px;
+            padding: 20px;
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+        .upload-box:hover { border-color: var(--navy-mid); background: #eff6ff; }
+        .upload-box h3 { font-size: 1rem; color: var(--navy-dark); margin-bottom: 6px; }
+        .upload-box p { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px; }
+        .upload-box input[type="file"] { width: 100%; font-size: 0.85rem; }
+
+        .modo-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .radio-group { display: flex; flex-wrap: wrap; gap: 16px; }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #f8fafc;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
         }
 
-        .upload-box:hover {
-            border-color: var(--primary);
-            background-color: #eff6ff;
-        }
-
-        .upload-box .hint {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        /* Botão Principal */
-        .btn-submit {
-            width: 100%;
-            margin-top: 24px;
-            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+        .btn-primary {
+            background: var(--navy-dark);
             color: #ffffff;
             border: none;
-            border-radius: 8px;
-            padding: 14px 20px;
-            font-size: 1rem;
-            font-weight: 700;
+            padding: 12px 26px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            transition: background 0.2s;
         }
+        .btn-primary:hover { background: var(--navy-mid); }
+        .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
 
-        .btn-submit:hover {
-            background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+        .btn-secondary {
+            background: #ffffff;
+            color: var(--navy-dark);
+            border: 1px solid #cbd5e1;
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
         }
+        .btn-secondary:hover { background: #f1f5f9; }
 
-        /* Tabela de Resultados */
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
+        /* Lista de pareamento de empresas antes de rodar */
+        .preview-lista {
+            margin-top: 18px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
         }
-
-        .table-header h2 {
-            font-size: 1.15rem;
+        .preview-header {
+            background: #f8fafc;
+            padding: 10px 14px;
+            font-size: 0.83rem;
             font-weight: 700;
             color: var(--navy-dark);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
         }
-
-        .count-badge {
-            background-color: #dbeafe;
-            color: #1e40af;
-            padding: 4px 12px;
-            border-radius: 999px;
+        .preview-itens {
+            max-height: 240px;
+            overflow-y: auto;
+            divide-y: 1px solid var(--border);
+        }
+        .preview-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 8px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.83rem;
+        }
+        .tag-tipo {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+        .tag-livro { background: #dbeafe; color: #1e40af; }
+        .tag-plan { background: #e0e7ff; color: #3730a3; }
+        .input-empresa {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 4px 8px;
             font-size: 0.82rem;
             font-weight: 700;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.9rem;
-        }
-
-        thead th {
-            background-color: #f8fafc;
-            color: #475569;
-            font-weight: 700;
-            font-size: 0.8rem;
+            color: var(--navy-dark);
+            width: 170px;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
-            padding: 13px 15px;
-            border-bottom: 2px solid var(--border-color);
         }
 
-        tbody td {
-            padding: 13px 15px;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
+        /* Progresso */
+        .progress-box {
+            display: none;
+            margin-top: 18px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--navy-mid);
+            transition: width 0.25s;
         }
 
-        tbody tr:hover {
-            background-color: #f8fafc;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .cfop-tag {
-            background-color: #f1f5f9;
-            border: 1px solid #cbd5e1;
-            color: #0f172a;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 6px;
+        .erros-lote {
+            display: none;
+            margin-top: 14px;
+            padding: 12px 16px;
+            background: var(--err-bg);
+            color: var(--err-text);
+            border-radius: 8px;
             font-size: 0.84rem;
         }
 
-        .badge-status {
+        /* Painel de Resultados */
+        #painel-resultados { display: none; }
+
+        .empresa-selector-bar {
+            background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
+            border: 2px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+        .empresa-select {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #93c5fd;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--navy-dark);
+            background: #ffffff;
+            min-width: 260px;
+            cursor: pointer;
+        }
+        .empresa-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .emp-pill {
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .emp-pill.active {
+            background: var(--navy-dark);
+            color: #ffffff;
+            border-color: var(--navy-dark);
+        }
+
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 18px;
+        }
+        .kpi-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .kpi-value { font-size: 1.35rem; font-weight: 700; color: var(--navy-dark); margin-top: 4px; }
+
+        .filtros-tabela {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .filter-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+        .f-pill {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #f8fafc;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .f-pill.active { background: var(--navy-mid); color: #ffffff; border-color: var(--navy-mid); }
+        .search-input {
+            padding: 7px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            width: 230px;
+        }
+
+        .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.86rem; background: #ffffff; }
+        th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-align: left;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        td { padding: 11px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        tr:hover td { background: #f8fafc; }
+
+        .badge-cfop {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-weight: 700;
+            font-size: 0.8rem;
+            background: #ffffff;
+        }
+        .badge-emp {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            color: #1e293b;
+            font-weight: 700;
+            font-size: 0.76rem;
+        }
+        .status-pill {
             display: inline-block;
             padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.78rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
             font-weight: 700;
+            white-space: nowrap;
         }
-
-        .badge-ok {
-            background-color: var(--success-bg);
-            color: var(--success-text);
-            border: 1px solid #86efac;
-        }
-
-        .badge-divergente {
-            background-color: var(--danger-bg);
-            color: var(--danger-text);
-            border: 1px solid #fca5a5;
-        }
-
-        .badge-ausente {
-            background-color: var(--warning-bg);
-            color: var(--warning-text);
-            border: 1px solid #fcd34d;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-        }
+        .st-ok { background: var(--ok-bg); color: var(--ok-text); }
+        .st-ausente { background: var(--warn-bg); color: var(--warn-text); }
+        .st-div { background: var(--err-bg); color: var(--err-text); }
     </style>
 </head>
 <body>
 
-    <header class="header">
-        <div class="header-content">
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <img src="{{ url_for('static', filename='logo.png') }}"
-                     alt="Logo"
-                     style="height: 54px; width: auto; mix-blend-mode: lighten;">
-                <div>
-                    <h1>Conferência Fiscal</h1>
-                    <p>Cruzamento automático entre Livro Fiscal (Entradas/Saídas) e Planilhas da Empresa</p>
-                </div>
+<header class="header">
+    <div class="header-content">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="height: 54px; width: auto; mix-blend-mode: lighten;">
+            <div>
+                <h1>Conferência Fiscal</h1>
+                <p>Cruzamento automático entre Livro Fiscal (Entradas/Saídas) e Planilhas da Empresa</p>
             </div>
-            <span class="header-badge">Auditoria Fiscal Automatizada</span>
         </div>
-    </header>
+        <span class="header-badge">Auditoria Fiscal Automatizada</span>
+    </div>
+</header>
 
-    <div class="container">
-
-        {% if mensagem %}
-        <div class="alert {% if 'Erro' in mensagem %}alert-danger{% else %}alert-success{% endif %}">
-            <span>{{ mensagem }}</span>
-            {% if conferencia_id %}
-            <a href="/resultado/{{ conferencia_id }}" class="btn-dashboard">
-                Ver Dashboard Completo e Exportar →
-            </a>
-            {% endif %}
+<div class="container">
+    <!-- Card de Upload em Lote -->
+    <div class="card">
+        <div class="grid-upload">
+            <div class="upload-box">
+                <h3>1. Livros Fiscais (PDFs)</h3>
+                <p>Selecione um ou vários PDFs (ex: Alpine.pdf, DMF.pdf...)</p>
+                <input type="file" id="input-livros" multiple accept=".pdf,.xlsx,.ods,.csv">
+            </div>
+            <div class="upload-box">
+                <h3>2. Planilhas das Empresas</h3>
+                <p>Selecione as planilhas correspondentes (.xlsx, .ods, .csv)</p>
+                <input type="file" id="input-planilhas" multiple accept=".xlsx,.ods,.csv,.pdf">
+            </div>
         </div>
-        {% endif %}
+
+        <div class="modo-bar">
+            <div class="radio-group">
+                <label class="radio-option">
+                    <input type="radio" name="modo_operacao" value="notas" checked>
+                    Conferência Nota a Nota (Detalhado)
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="modo_operacao" value="resumo_cfop">
+                    Resumo por CFOP (Totais)
+                </label>
+            </div>
+            <button type="button" class="btn-primary" id="btn-processar" onclick="iniciarFilaConferencia()">
+                Iniciar Conferência
+            </button>
+        </div>
+
+        <!-- Pareamento automático pelo nome do arquivo -->
+        <div class="preview-lista" id="preview-lista">
+            <div class="preview-header">
+                <span>Arquivos Selecionados & Identificação da Empresa (pelo título do arquivo)</span>
+                <span id="contador-arquivos">0 arquivos</span>
+            </div>
+            <div class="preview-itens" id="preview-itens"></div>
+        </div>
+
+        <!-- Barra de progresso da fila -->
+        <div class="progress-box" id="progress-box">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                <span id="progress-texto">Preparando arquivos...</span>
+                <span id="progress-pct">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="erros-lote" id="erros-lote"></div>
+    </div>
+
+    <!-- Painel de Resultados Persistente com Troca de Empresa -->
+    <div id="painel-resultados">
+        <div class="empresa-selector-bar">
+            <div>
+                <div style="font-size: 0.78rem; font-weight: 700; color: var(--navy-mid); text-transform: uppercase; margin-bottom: 4px;">
+                    Filtrar Resultados por Empresa / PDF:
+                </div>
+                <select id="select-empresa" class="empresa-select" onchange="selecionarEmpresa(this.value)">
+                    <option value="__TODAS__">TODAS AS EMPRESAS (Consolidado)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn-secondary" onclick="exportarCSV()">Exportar Tabela (Excel/CSV)</button>
+            </div>
+            <div class="empresa-pills" id="empresa-pills"></div>
+        </div>
+
+        <div class="kpis">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Livro Fiscal</div>
+                <div class="kpi-value" id="kpi-livro">R$ 0,00</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total Planilhas</div>
+                <div class="kpi-value" id="kpi-planilha">R$ 0,00</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Diferença Líquida</div>
+                <div class="kpi-value" id="kpi-diff">R$ 0,00</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Divergências / Ausentes</div>
+                <div class="kpi-value" id="kpi-div" style="color: #b91c1c;">0</div>
+            </div>
+        </div>
 
         <div class="card">
-            <form method="POST" enctype="multipart/form-data">
-                
-                <span class="section-title">1. Escolha o Modo de Conferência</span>
-                <div class="grid-2">
-                    <div class="form-group">
-                        <select name="modo_operacao" id="modoOperacao" class="mode-select" required>
-                            <option value="resumo_cfop" selected>Modo 1: Resumo por CFOP (Totais Consolidados)</option>
-                            <option value="detalhado_nota">Modo 2: Detalhado por Nota Fiscal (Item a Item)</option>
-                        </select>
-                    </div>
-                    <div class="mode-hint" id="descricaoModo">
-                        Lê o quadro de Resumo no final do Livro Fiscal e soma os valores da planilha por CFOP (coluna Código).
-                    </div>
+            <div class="filtros-tabela">
+                <div class="filter-pills" id="status-pills">
+                    <button type="button" class="f-pill active" data-st="TODOS" onclick="mudarFiltroStatus('TODOS', this)">Todos</button>
+                    <button type="button" class="f-pill" data-st="PROBLEMAS" onclick="mudarFiltroStatus('PROBLEMAS', this)">Somente Divergências/Ausentes</button>
+                    <button type="button" class="f-pill" data-st="DIVERGENCIA_VALOR" onclick="mudarFiltroStatus('DIVERGENCIA_VALOR', this)">Divergência Valor</button>
+                    <button type="button" class="f-pill" data-st="AUSENTE_LIVRO" onclick="mudarFiltroStatus('AUSENTE_LIVRO', this)">Ausente Livro</button>
+                    <button type="button" class="f-pill" data-st="AUSENTE_PLANILHA" onclick="mudarFiltroStatus('AUSENTE_PLANILHA', this)">Ausente Planilha</button>
+                    <button type="button" class="f-pill" data-st="OK" onclick="mudarFiltroStatus('OK', this)">OK</button>
                 </div>
-
-                <hr class="divider">
-
-                <span class="section-title">2. Selecione os Arquivos</span>
-                <div class="grid-2">
-                    <div class="upload-box">
-                        <label>Livro Fiscal (PDF, Excel ou CSV)</label>
-                        <span class="hint">Aceita Livro de Entradas/Saídas em PDF, .xlsx ou .csv.</span>
-                        <input type="file" name="livro_fiscal" accept=".pdf,.csv,.xlsx" required>
-                    </div>
-                    <div class="upload-box">
-                        <label>Planilha Fiscal da Empresa (Excel , CSV ou ODF)</label>
-                        <span class="hint">Identifica automaticamente a coluna <strong>Código</strong> como CFOP.</span>
-                        <input type="file" name="planilha_fiscal" accept=".xlsx,.ods,.csv" required>
-                    </div>
-                </div>
-
-                <hr class="divider">
-
-                <span class="section-title">3. Filtros Opcionais (Deixe em branco para conferir tudo)</span>
-                <div class="grid-4">
-                    <div class="form-group">
-                        <label>Data Inicial</label>
-                        <input type="date" name="data_inicio">
-                    </div>
-                    <div class="form-group">
-                        <label>Data Final</label>
-                        <input type="date" name="data_fim">
-                    </div>
-                    <div class="form-group">
-                        <label>Número da Nota</label>
-                        <input type="text" name="nota" placeholder="Ex: 1001">
-                    </div>
-                    <div class="form-group">
-                        <label>CFOP / Código</label>
-                        <input type="text" name="cfop" placeholder="Ex: 5102">
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-submit">Realizar Conferência Fiscal</button>
-            </form>
-        </div>
-
-        <div class="card">
-            <div class="table-header">
-                <h2>Resultados da Conferência</h2>
-                {% if resultados %}
-                <span class="count-badge">{{ resultados|length }} registro(s)</span>
-                {% endif %}
+                <input type="text" class="search-input" id="busca-tabela" placeholder="Buscar Nota ou CFOP..." oninput="renderizarTabela()">
             </div>
 
-            <div class="table-wrapper">
+            <div class="table-wrap">
                 <table>
                     <thead>
                         <tr>
-                            <th>Período / Data</th>
-                            <th>Nota / Tipo</th>
+                            <th>Empresa</th>
+                            <th>Data</th>
+                            <th>Nota</th>
                             <th>CFOP</th>
-                            <th class="text-right">Valor (R$)</th>
-                            <th class="text-center">Status</th>
-                            <th>Detalhes / Ocorrência</th>
+                            <th>Valor Livro</th>
+                            <th>Valor Planilha</th>
+                            <th>Diferença</th>
+                            <th>Status</th>
+                            <th>Diagnóstico</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for item in resultados %}
-                        <tr>
-                            <td style="color: #64748b; font-size: 0.85rem;">{{ item.data }}</td>
-                            <td style="font-weight: 600;">{{ item.nota }}</td>
-                            <td><span class="cfop-tag">{{ item.cfop }}</span></td>
-                            <td class="text-right" style="font-weight: 700;">R$ {{ item.valor }}</td>
-                            <td class="text-center">
-                                {% if item.status == 'OK' %}
-                                    <span class="badge-status badge-ok">OK</span>
-                                {% elif item.status == 'DIVERGENCIA_DATA' %}
-                                    <span class="badge-status badge-ausente">DIVERGÊNCIA DE DATA</span>
-                                {% elif 'DIVERGENCIA' in item.status %}
-                                    <span class="badge-status badge-divergente">DIVERGÊNCIA DE VALOR</span>
-                                {% else %}
-                                    <span class="badge-status badge-ausente">{{ item.status }}</span>
-                                {% endif %}
-                            </td>
-                            <td style="color: #475569; font-size: 0.86rem;">{{ item.detalhe }}</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="6" class="empty-state">
-                                Nenhum registro conferido ainda. Escolha o modo, envie os arquivos acima e clique em <strong>Realizar Conferência Fiscal</strong>.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
+                    <tbody id="tbody-resultados"></tbody>
                 </table>
             </div>
         </div>
-
     </div>
+</div>
 
-    <script>
-        const selectModo = document.getElementById('modoOperacao');
-        const descModo = document.getElementById('descricaoModo');
+<script>
+    let filaArquivos = [];
+    let dadosExtraidos = []; // { empresa, origem: 'livro'|'planilha', data, nota, cfop, valor }
+    let empresaSelecionada = '__TODAS__';
+    let filtroStatusAtual = 'TODOS';
+    let linhasAtuaisTabela = [];
 
-        selectModo.addEventListener('change', function() {
-            if (this.value === 'resumo_cfop') {
-                descModo.textContent = 'Lê o quadro de Resumo no final do Livro Fiscal e soma os valores da planilha por CFOP (coluna Código).';
-            } else {
-                descModo.textContent = 'Cruza Nota por Nota individualmente entre o Livro Fiscal e a Planilha da empresa.';
+    document.getElementById('input-livros').addEventListener('change', atualizarPreviewArquivos);
+    document.getElementById('input-planilhas').addEventListener('change', atualizarPreviewArquivos);
+
+    function extrairNomeEmpresa(nomeArquivo) {
+        let base = nomeArquivo.replace(/\.[^/.]+$/, '');
+        base = base.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+        base = base.replace(/\b(LIVRO|FISCAL|ENTRADAS|SAIDAS|PLANILHA|PLANILHAS|RELATORIO|NOTAS|RESUMO|CFOP|CONFERENCIA|EMPRESA|SISTEMA|MODELO|P1|P2|REGISTRO|APURACAO|DE|DO|DA|DOS|DAS)\b/g, ' ');
+        base = base.replace(/\b\d{1,2}[-_./]\d{2,4}\b/g, ' ');
+        base = base.replace(/\b20\d{2}\b/g, ' ');
+        base = base.replace(/[-_().]+/g, ' ').replace(/\s+/g, ' ').trim();
+        return base || nomeArquivo.replace(/\.[^/.]+$/, '').toUpperCase();
+    }
+
+    function atualizarPreviewArquivos() {
+        const livros = Array.from(document.getElementById('input-livros').files || []);
+        const planilhas = Array.from(document.getElementById('input-planilhas').files || []);
+
+        filaArquivos = [];
+        livros.forEach(f => filaArquivos.push({ file: f, origem: 'livro', empresa: extrairNomeEmpresa(f.name) }));
+        planilhas.forEach(f => filaArquivos.push({ file: f, origem: 'planilha', empresa: extrairNomeEmpresa(f.name) }));
+
+        const box = document.getElementById('preview-lista');
+        const container = document.getElementById('preview-itens');
+        document.getElementById('contador-arquivos').textContent = `${filaArquivos.length} arquivo(s)`;
+
+        if (filaArquivos.length === 0) {
+            box.style.display = 'none';
+            return;
+        }
+
+        box.style.display = 'block';
+        container.innerHTML = filaArquivos.map((item, idx) => `
+            <div class="preview-row">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="tag-tipo ${item.origem === 'livro' ? 'tag-livro' : 'tag-plan'}">
+                        ${item.origem === 'livro' ? 'LIVRO' : 'PLANILHA'}
+                    </span>
+                    <span>${item.file.name}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="color:#64748b; font-size:0.78rem;">Empresa:</span>
+                    <input type="text" class="input-empresa" value="${item.empresa}"
+                           onchange="filaArquivos[${idx}].empresa = this.value.trim().toUpperCase() || 'GERAL'">
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function iniciarFilaConferencia() {
+        if (filaArquivos.length === 0) {
+            alert('Selecione os PDFs e/ou Planilhas antes de iniciar.');
+            return;
+        }
+
+        const btn = document.getElementById('btn-processar');
+        const progressBox = document.getElementById('progress-box');
+        const progressTexto = document.getElementById('progress-texto');
+        const progressPct = document.getElementById('progress-pct');
+        const progressFill = document.getElementById('progress-fill');
+        const errosBox = document.getElementById('erros-lote');
+
+        btn.disabled = true;
+        progressBox.style.display = 'block';
+        errosBox.style.display = 'none';
+        errosBox.innerHTML = '';
+
+        dadosExtraidos = [];
+        const erros = [];
+        const modo = document.querySelector('input[name="modo_operacao"]:checked').value;
+
+        for (let i = 0; i < filaArquivos.length; i++) {
+            const item = filaArquivos[i];
+            const pct = Math.round(((i) / filaArquivos.length) * 100);
+            progressTexto.textContent = `Processando ${i + 1} de ${filaArquivos.length}: ${item.file.name} (${item.empresa})`;
+            progressPct.textContent = `${pct}%`;
+            progressFill.style.width = `${pct}%`;
+
+            const formData = new FormData();
+            formData.append('arquivo', item.file);
+            formData.append('modo_operacao', modo);
+
+            try {
+                const resp = await fetch('/api/extrair', { method: 'POST', body: formData });
+                const json = await resp.json();
+
+                if (!resp.ok || !json.sucesso) {
+                    erros.push(`• <strong>${item.file.name}</strong>: ${json.erro || 'Falha na leitura'}`);
+                } else {
+                    json.registros.forEach(reg => {
+                        dadosExtraidos.push({
+                            empresa: item.empresa,
+                            origem: item.origem,
+                            data: reg.data,
+                            nota: reg.nota,
+                            cfop: reg.cfop,
+                            valor: Number(reg.valor) || 0
+                        });
+                    });
+                }
+            } catch (err) {
+                erros.push(`• <strong>${item.file.name}</strong>: Erro de rede (${err.message})`);
             }
+        }
+
+        progressTexto.textContent = `Concluído! ${filaArquivos.length} arquivo(s) processado(s).`;
+        progressPct.textContent = '100%';
+        progressFill.style.width = '100%';
+        btn.disabled = false;
+
+        if (erros.length > 0) {
+            errosBox.style.display = 'block';
+            errosBox.innerHTML = `<strong>Avisos durante a leitura:</strong><br>${erros.join('<br>')}`;
+        }
+
+        montarSeletorEmpresas();
+        document.getElementById('painel-resultados').style.display = 'block';
+        renderizarTabela();
+    }
+
+    function montarSeletorEmpresas() {
+        const empresasSet = new Set(filaArquivos.map(f => f.empresa));
+        dadosExtraidos.forEach(d => empresasSet.add(d.empresa));
+        const empresas = Array.from(empresasSet).sort();
+
+        const select = document.getElementById('select-empresa');
+        const pills = document.getElementById('empresa-pills');
+
+        select.innerHTML = `<option value="__TODAS__">TODAS AS EMPRESAS (${empresas.length} empresas)</option>` +
+            empresas.map(emp => `<option value="${emp}">${emp}</option>`).join('');
+
+        pills.innerHTML = `<button type="button" class="emp-pill active" data-emp="__TODAS__" onclick="selecionarEmpresa('__TODAS__')">Todas (${empresas.length})</button>` +
+            empresas.map(emp => `<button type="button" class="emp-pill" data-emp="${emp}" onclick="selecionarEmpresa('${emp}')">${emp}</button>`).join('');
+
+        empresaSelecionada = '__TODAS__';
+    }
+
+    function selecionarEmpresa(emp) {
+        empresaSelecionada = emp;
+        document.getElementById('select-empresa').value = emp;
+        document.querySelectorAll('.emp-pill').forEach(p => {
+            p.classList.toggle('active', p.getAttribute('data-emp') === emp);
         });
-    </script>
+        renderizarTabela();
+    }
+
+    function mudarFiltroStatus(st, btn) {
+        filtroStatusAtual = st;
+        document.querySelectorAll('.f-pill').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        renderizarTabela();
+    }
+
+    function formatarMoeda(val) {
+        return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function renderizarTabela() {
+        const modo = document.querySelector('input[name="modo_operacao"]:checked').value;
+        const filtrados = empresaSelecionada === '__TODAS__'
+            ? dadosExtraidos
+            : dadosExtraidos.filter(d => d.empresa === empresaSelecionada);
+
+        const mapaLivro = new Map();
+        const mapaPlan = new Map();
+
+        filtrados.forEach(item => {
+            const chave = modo === 'resumo_cfop'
+                ? `${item.empresa}|${item.cfop}`
+                : `${item.empresa}|${item.nota}|${item.cfop}`;
+
+            const alvo = item.origem === 'livro' ? mapaLivro : mapaPlan;
+            const atual = alvo.get(chave) || {
+                empresa: item.empresa,
+                data: item.data,
+                nota: item.nota,
+                cfop: item.cfop,
+                valor: 0
+            };
+            if (atual.data === '-' && item.data !== '-') atual.data = item.data;
+            atual.valor = Math.round((atual.valor + item.valor) * 100) / 100;
+            alvo.set(chave, atual);
+        });
+
+        const todasChaves = new Set([...mapaLivro.keys(), ...mapaPlan.keys()]);
+        const linhas = [];
+        let somaLivro = 0;
+        let somaPlan = 0;
+        let qtdProblemas = 0;
+
+        todasChaves.forEach(chave => {
+            const liv = mapaLivro.get(chave);
+            const pla = mapaPlan.get(chave);
+
+            const empresa = liv ? liv.empresa : pla.empresa;
+            const data = (liv && liv.data !== '-') ? liv.data : (pla ? pla.data : '-');
+            const nota = liv ? liv.nota : pla.nota;
+            const cfop = liv ? liv.cfop : pla.cfop;
+            const valLiv = liv ? liv.valor : 0;
+            const valPla = pla ? pla.valor : 0;
+            const diff = Math.round((valLiv - valPla) * 100) / 100;
+
+            somaLivro += valLiv;
+            somaPlan += valPla;
+
+            let status = 'OK';
+            let diag = 'Valores conferem';
+
+            if (!liv && pla) {
+                status = 'AUSENTE_LIVRO';
+                diag = 'Existência: Livro (Ausente) vs Planilha (Presente) | Consta nas Planilhas, mas não no Livro Fiscal';
+                qtdProblemas++;
+            } else if (liv && !pla) {
+                status = 'AUSENTE_PLANILHA';
+                diag = 'Existência: Livro (Presente) vs Planilha (Ausente) | Consta no Livro Fiscal, mas não nas Planilhas';
+                qtdProblemas++;
+            } else if (Math.abs(diff) > 0.02) {
+                status = 'DIVERGENCIA_VALOR';
+                diag = `Diferença de ${formatarMoeda(diff)} entre Livro Fiscal e Planilha`;
+                qtdProblemas++;
+            }
+
+            linhas.push({ empresa, data, nota, cfop, valLiv, valPla, diff, status, diag });
+        });
+
+        document.getElementById('kpi-livro').textContent = formatarMoeda(somaLivro);
+        document.getElementById('kpi-planilha').textContent = formatarMoeda(somaPlan);
+        document.getElementById('kpi-diff').textContent = formatarMoeda(somaLivro - somaPlan);
+        document.getElementById('kpi-div').textContent = qtdProblemas;
+
+        const termoBusca = document.getElementById('busca-tabela').value.trim().toLowerCase();
+        const linhasExibidas = linhas.filter(l => {
+            if (filtroStatusAtual === 'PROBLEMAS' && l.status === 'OK') return false;
+            if (filtroStatusAtual !== 'TODOS' && filtroStatusAtual !== 'PROBLEMAS' && l.status !== filtroStatusAtual) return false;
+            if (termoBusca && !l.nota.toLowerCase().includes(termoBusca) && !l.cfop.includes(termoBusca) && !l.empresa.toLowerCase().includes(termoBusca)) {
+                return false;
+            }
+            return true;
+        });
+
+        linhasAtuaisTabela = linhasExibidas;
+        const tbody = document.getElementById('tbody-resultados');
+
+        if (linhasExibidas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:24px; color:#64748b;">Nenhum registro encontrado para este filtro.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = linhasExibidas.map(l => {
+            let stClass = 'st-ok';
+            if (l.status === 'DIVERGENCIA_VALOR') stClass = 'st-div';
+            else if (l.status.startsWith('AUSENTE')) stClass = 'st-ausente';
+
+            return `
+                <tr>
+                    <td><span class="badge-emp">${l.empresa}</span></td>
+                    <td>${l.data}</td>
+                    <td style="font-weight:700;">${l.nota}</td>
+                    <td><span class="badge-cfop">${l.cfop}</span></td>
+                    <td style="font-weight:600;">${formatarMoeda(l.valLiv)}</td>
+                    <td style="font-weight:600;">${formatarMoeda(l.valPla)}</td>
+                    <td style="font-weight:700; color:${Math.abs(l.diff) > 0.02 ? '#b91c1c' : '#166534'};">${formatarMoeda(l.diff)}</td>
+                    <td><span class="status-pill ${stClass}">${l.status}</span></td>
+                    <td style="color:#475569; font-size:0.82rem;">${l.diag}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function exportarCSV() {
+        if (!linhasAtuaisTabela.length) return;
+        const cab = ['Empresa', 'Data', 'Nota', 'CFOP', 'Valor Livro', 'Valor Planilha', 'Diferenca', 'Status', 'Diagnostico'];
+        const csvLinhas = [cab.join(';')];
+
+        linhasAtuaisTabela.forEach(l => {
+            csvLinhas.push([
+                l.empresa,
+                l.data,
+                l.nota,
+                l.cfop,
+                l.valLiv.toFixed(2).replace('.', ','),
+                l.valPla.toFixed(2).replace('.', ','),
+                l.diff.toFixed(2).replace('.', ','),
+                l.status,
+                `"${l.diag}"`
+            ].join(';'));
+        });
+
+        const blob = new Blob(['\uFEFF' + csvLinhas.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const sufixo = empresaSelecionada === '__TODAS__' ? 'TODAS_EMPRESAS' : empresaSelecionada;
+        a.download = `conferencia_fiscal_${sufixo}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+</script>
+
 </body>
 </html>
