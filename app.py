@@ -14,7 +14,7 @@ from services.file_reader import ler_arquivo_tabular, FileReadError
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-CNPJ_FORMATADO_RE = re.compile(r'\b(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})\b')
+CNPJ_FORMATADO_RE = re.compile(r'\b(\d{2}\.?\d{3}\.?\d{3}\s*/\s*\d{4}\s*-\s*\d{2})\b')
 CNPJ_ROTULADO_RE = re.compile(r'(?:cnpj|cpf/cnpj|inscri[çc][ãa]o)[^\d]{0,18}(\d{14})\b', re.IGNORECASE)
 RAZAO_ROTULADA_RE = re.compile(
     r'(?:empresa|raz[ãa]o\s*social|contribuinte|nome\s*empresarial|estabelecimento)\s*[:\-]\s*([^\n|;]{3,90})',
@@ -48,7 +48,7 @@ def formatar_cnpj(cnpj_digits: str) -> str:
     return f"{cnpj_digits[:2]}.{cnpj_digits[2:5]}.{cnpj_digits[5:8]}/{cnpj_digits[8:12]}-{cnpj_digits[12:]}"
 
 
-def extrair_cabecalho_texto(caminho_temp: str, extensao: str, max_linhas: int = 25) -> str:
+def extrair_cabecalho_texto(caminho_temp: str, extensao: str, max_linhas: int = 40) -> str:
     linhas = []
     try:
         if extensao == '.pdf':
@@ -108,21 +108,18 @@ def extrair_identificacao(cabecalho_texto: str) -> dict:
 
     cnpj_valido = ''
 
-    # 1. Busca CNPJs formatados (XX.XXX.XXX/XXXX-XX)
     for match in CNPJ_FORMATADO_RE.findall(cabecalho_texto):
         digits = re.sub(r'\D', '', match)
         if validar_cnpj(digits):
             cnpj_valido = digits
             break
 
-    # 2. Busca CNPJ rotulado sem pontuação (ex: CNPJ: 12345678000199)
     if not cnpj_valido:
         for match in CNPJ_ROTULADO_RE.findall(cabecalho_texto):
             if validar_cnpj(match):
                 cnpj_valido = match
                 break
 
-    # 3. Tenta extrair Razão Social / Nome da Empresa
     empresa_detectada = ''
     m_rot = RAZAO_ROTULADA_RE.search(cabecalho_texto)
     if m_rot:
@@ -133,7 +130,7 @@ def extrair_identificacao(cabecalho_texto: str) -> dict:
             empresa_detectada = cand.upper()
 
     if not empresa_detectada:
-        for linha in cabecalho_texto.splitlines()[:15]:
+        for linha in cabecalho_texto.splitlines()[:20]:
             linha_up = linha.upper()
             m_suf = SUFIXO_EMPRESA_RE.search(linha_up)
             if m_suf:
@@ -329,13 +326,11 @@ def api_extrair():
     try:
         arquivo.save(caminho_temp)
 
-        # Extrai cabeçalho das primeiras 25 linhas para auto-pareamento por CNPJ / Razão Social
-        cabecalho_texto = extrair_cabecalho_texto(caminho_temp, extensao, max_linhas=25)
+        cabecalho_texto = extrair_cabecalho_texto(caminho_temp, extensao, max_linhas=40)
         identificacao = extrair_identificacao(cabecalho_texto)
 
         resultado_leitura = ler_arquivo_tabular(caminho_temp, modo_operacao=modo_operacao)
 
-        # Suporta tanto retorno em lista quanto em dicionário vindo do file_reader
         if isinstance(resultado_leitura, dict):
             registros_brutos = resultado_leitura.get('registros', [])
             cab_extra = resultado_leitura.get('cabecalho_texto', '')
