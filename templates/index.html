@@ -132,7 +132,7 @@
         }
         .btn-secondary:hover { background: #f1f5f9; }
 
-        /* Lista de pareamento de empresas antes de rodar */
+        /* Pareamento visual PDF <-> Planilha */
         .preview-lista {
             margin-top: 18px;
             border: 1px solid var(--border);
@@ -149,11 +149,11 @@
             border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
         .preview-itens {
-            max-height: 240px;
+            max-height: 320px;
             overflow-y: auto;
-            divide-y: 1px solid var(--border);
         }
         .preview-row {
             display: flex;
@@ -161,28 +161,46 @@
             align-items: center;
             justify-content: space-between;
             gap: 10px;
-            padding: 8px 14px;
+            padding: 9px 14px;
             border-bottom: 1px solid #f1f5f9;
             font-size: 0.83rem;
         }
         .tag-tipo {
-            padding: 2px 8px;
+            padding: 3px 8px;
             border-radius: 6px;
             font-size: 0.72rem;
             font-weight: 700;
         }
         .tag-livro { background: #dbeafe; color: #1e40af; }
         .tag-plan { background: #e0e7ff; color: #3730a3; }
-        .input-empresa {
+        .badge-match-ok {
+            background: var(--ok-bg);
+            color: var(--ok-text);
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+        .badge-match-warn {
+            background: var(--warn-bg);
+            color: var(--warn-text);
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+        .input-empresa, .select-vinculo {
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             padding: 4px 8px;
             font-size: 0.82rem;
             font-weight: 700;
             color: var(--navy-dark);
-            width: 170px;
+            background: #ffffff;
             text-transform: uppercase;
         }
+        .input-empresa { width: 170px; }
+        .select-vinculo { min-width: 210px; }
 
         /* Progresso */
         .progress-box {
@@ -241,7 +259,7 @@
             font-weight: 700;
             color: var(--navy-dark);
             background: #ffffff;
-            min-width: 260px;
+            min-width: 300px;
             cursor: pointer;
         }
         .empresa-pills {
@@ -375,7 +393,7 @@
         <div class="grid-upload">
             <div class="upload-box">
                 <h3>1. Livros Fiscais (PDFs)</h3>
-                <p>Selecione um ou vários PDFs (ex: Alpine.pdf, DMF.pdf...)</p>
+                <p>Selecione todos os PDFs (ex: Alpine.pdf, DMF.pdf...)</p>
                 <input type="file" id="input-livros" multiple accept=".pdf,.xlsx,.ods,.csv">
             </div>
             <div class="upload-box">
@@ -401,11 +419,16 @@
             </button>
         </div>
 
-        <!-- Pareamento automático pelo nome do arquivo -->
+        <!-- Pareamento automático entre PDF e Planilha -->
         <div class="preview-lista" id="preview-lista">
             <div class="preview-header">
-                <span>Arquivos Selecionados & Identificação da Empresa (pelo título do arquivo)</span>
-                <span id="contador-arquivos">0 arquivos</span>
+                <span>Pareamento Automático (PDF ↔ Planilha correspondente)</span>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span id="contador-arquivos">0 arquivos</span>
+                    <button type="button" onclick="limparFila()" style="background:#fee2e2; color:#991b1b; border:none; padding:4px 10px; border-radius:6px; font-size:0.78rem; font-weight:700; cursor:pointer;">
+                        Limpar lista
+                    </button>
+                </div>
             </div>
             <div class="preview-itens" id="preview-itens"></div>
         </div>
@@ -429,7 +452,7 @@
         <div class="empresa-selector-bar">
             <div>
                 <div style="font-size: 0.78rem; font-weight: 700; color: var(--navy-mid); text-transform: uppercase; margin-bottom: 4px;">
-                    Filtrar Resultados por Empresa / PDF:
+                    Alternar Resultados por Empresa / PDF:
                 </div>
                 <select id="select-empresa" class="empresa-select" onchange="selecionarEmpresa(this.value)">
                     <option value="__TODAS__">TODAS AS EMPRESAS (Consolidado)</option>
@@ -496,33 +519,184 @@
 </div>
 
 <script>
-    let filaArquivos = [];
-    let dadosExtraidos = []; // { empresa, origem: 'livro'|'planilha', data, nota, cfop, valor }
+    let filaArquivos = []; // { file, origem: 'livro'|'planilha', tokens: [], empresa: string, pareado: boolean, manual: boolean }
+    let dadosExtraidos = [];
     let empresaSelecionada = '__TODAS__';
     let filtroStatusAtual = 'TODOS';
     let linhasAtuaisTabela = [];
 
-    document.getElementById('input-livros').addEventListener('change', atualizarPreviewArquivos);
-    document.getElementById('input-planilhas').addEventListener('change', atualizarPreviewArquivos);
+    const STOPWORDS = new Set([
+        'LIVRO', 'FISCAL', 'FISCAIS', 'ENTRADA', 'ENTRADAS', 'SAIDA', 'SAIDAS',
+        'PLANILHA', 'PLANILHAS', 'RELATORIO', 'RELATORIOS', 'NOTA', 'NOTAS',
+        'RESUMO', 'CFOP', 'CONFERENCIA', 'EMPRESA', 'SISTEMA', 'MODELO',
+        'P1', 'P2', 'REGISTRO', 'APURACAO', 'MENSAL', 'CONTABIL', 'XML', 'SPED',
+        'LTDA', 'EIRELI', 'ME', 'EPP', 'SA', 'COMERCIO', 'INDUSTRIA', 'SERVICOS',
+        'DE', 'DO', 'DA', 'DOS', 'DAS', 'E', 'EM', 'PARA', 'COM', 'POR',
+        'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ',
+        'JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO',
+        'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
+        'PDF', 'XLSX', 'XLS', 'CSV', 'ODS'
+    ]);
 
-    function extrairNomeEmpresa(nomeArquivo) {
+    document.getElementById('input-livros').addEventListener('change', function(e) {
+        adicionarArquivosNaFila(e.target.files, 'livro');
+        e.target.value = '';
+    });
+
+    document.getElementById('input-planilhas').addEventListener('change', function(e) {
+        adicionarArquivosNaFila(e.target.files, 'planilha');
+        e.target.value = '';
+    });
+
+    function extrairTokensLimpos(nomeArquivo) {
         let base = nomeArquivo.replace(/\.[^/.]+$/, '');
         base = base.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-        base = base.replace(/\b(LIVRO|FISCAL|ENTRADAS|SAIDAS|PLANILHA|PLANILHAS|RELATORIO|NOTAS|RESUMO|CFOP|CONFERENCIA|EMPRESA|SISTEMA|MODELO|P1|P2|REGISTRO|APURACAO|DE|DO|DA|DOS|DAS)\b/g, ' ');
-        base = base.replace(/\b\d{1,2}[-_./]\d{2,4}\b/g, ' ');
-        base = base.replace(/\b20\d{2}\b/g, ' ');
-        base = base.replace(/[-_().]+/g, ' ').replace(/\s+/g, ' ').trim();
-        return base || nomeArquivo.replace(/\.[^/.]+$/, '').toUpperCase();
+        // Separa qualquer caractere que não seja letra ou número (inclui _, -, ., /, etc.)
+        const partes = base.split(/[^A-Z0-9]+/).filter(Boolean);
+        const tokens = partes.filter(p => {
+            if (STOPWORDS.has(p)) return false;
+            if (/^\d+$/.test(p)) return false; // ignora números puros (01, 09, 2026)
+            return true;
+        });
+        return tokens.length > 0 ? tokens : [base.replace(/[^A-Z0-9]+/g, ' ').trim() || 'GERAL'];
     }
 
-    function atualizarPreviewArquivos() {
-        const livros = Array.from(document.getElementById('input-livros').files || []);
-        const planilhas = Array.from(document.getElementById('input-planilhas').files || []);
+    function calcularSimilaridade(tokensA, tokensB) {
+        if (!tokensA.length || !tokensB.length) return 0;
+        let matches = 0;
+        for (const a of tokensA) {
+            for (const b of tokensB) {
+                if (a === b || (a.length >= 3 && b.length >= 3 && (a.startsWith(b) || b.startsWith(a)))) {
+                    matches++;
+                    break;
+                }
+            }
+        }
+        return matches / Math.min(tokensA.length, tokensB.length);
+    }
 
+    function recalcularPareamento() {
+        const livros = filaArquivos.filter(f => f.origem === 'livro');
+        const planilhas = filaArquivos.filter(f => f.origem === 'planilha');
+
+        // 1. Define o nome base das empresas a partir dos Livros (PDFs)
+        livros.forEach(liv => {
+            if (!liv.manual) {
+                liv.empresa = liv.tokens.join(' ');
+            }
+            liv.pareado = false;
+        });
+
+        // Se dois livros tiverem tokens idênticos ou muito próximos (ex: Entradas e Saídas da mesma empresa), unifica
+        for (let i = 0; i < livros.length; i++) {
+            for (let j = i + 1; j < livros.length; j++) {
+                if (!livros[j].manual && calcularSimilaridade(livros[i].tokens, livros[j].tokens) >= 0.8) {
+                    livros[j].empresa = livros[i].empresa;
+                }
+            }
+        }
+
+        // 2. Vincula cada Planilha ao Livro (PDF) correspondente
+        planilhas.forEach(pla => {
+            if (pla.manual) {
+                pla.pareado = livros.some(l => l.empresa === pla.empresa);
+                if (pla.pareado) {
+                    livros.filter(l => l.empresa === pla.empresa).forEach(l => l.pareado = true);
+                }
+                return;
+            }
+
+            if (livros.length === 0) {
+                pla.empresa = pla.tokens.join(' ');
+                pla.pareado = false;
+                return;
+            }
+
+            // Caso especial: apenas 1 PDF e 1 Planilha na fila -> pareia direto
+            if (livros.length === 1 && planilhas.length === 1) {
+                pla.empresa = livros[0].empresa;
+                pla.pareado = true;
+                livros[0].pareado = true;
+                return;
+            }
+
+            let melhorLivro = null;
+            let melhorScore = 0;
+
+            for (const liv of livros) {
+                const score = calcularSimilaridade(pla.tokens, liv.tokens);
+                if (score > melhorScore) {
+                    melhorScore = score;
+                    melhorLivro = liv;
+                }
+            }
+
+            if (melhorLivro && melhorScore >= 0.5) {
+                pla.empresa = melhorLivro.empresa;
+                pla.pareado = true;
+                melhorLivro.pareado = true;
+            } else {
+                pla.empresa = pla.tokens.join(' ');
+                pla.pareado = false;
+            }
+        });
+    }
+
+    function adicionarArquivosNaFila(fileList, origem) {
+        const novos = Array.from(fileList || []);
+        novos.forEach(f => {
+            const jaExiste = filaArquivos.some(item => item.origem === origem && item.file.name === f.name && item.file.size === f.size);
+            if (!jaExiste) {
+                const tokens = extrairTokensLimpos(f.name);
+                filaArquivos.push({
+                    file: f,
+                    origem: origem,
+                    tokens: tokens,
+                    empresa: tokens.join(' '),
+                    pareado: false,
+                    manual: false
+                });
+            }
+        });
+        recalcularPareamento();
+        renderizarFilaArquivos();
+    }
+
+    function alterarEmpresaLivro(idx, novoNome) {
+        const nomeLimpo = novoNome.trim().toUpperCase() || 'GERAL';
+        const antigoNome = filaArquivos[idx].empresa;
+        filaArquivos[idx].empresa = nomeLimpo;
+        filaArquivos[idx].manual = true;
+
+        // Atualiza planilhas que estavam pareadas automaticamente com esse livro
+        filaArquivos.forEach(item => {
+            if (item.origem === 'planilha' && !item.manual && item.empresa === antigoNome) {
+                item.empresa = nomeLimpo;
+            }
+        });
+        recalcularPareamento();
+        renderizarFilaArquivos();
+    }
+
+    function vincularPlanilhaAoLivro(idxPlanilha, empresaDestino) {
+        filaArquivos[idxPlanilha].empresa = empresaDestino;
+        filaArquivos[idxPlanilha].manual = true;
+        recalcularPareamento();
+        renderizarFilaArquivos();
+    }
+
+    function removerDaFila(idx) {
+        filaArquivos.splice(idx, 1);
+        recalcularPareamento();
+        renderizarFilaArquivos();
+    }
+
+    function limparFila() {
         filaArquivos = [];
-        livros.forEach(f => filaArquivos.push({ file: f, origem: 'livro', empresa: extrairNomeEmpresa(f.name) }));
-        planilhas.forEach(f => filaArquivos.push({ file: f, origem: 'planilha', empresa: extrairNomeEmpresa(f.name) }));
+        renderizarFilaArquivos();
+    }
 
+    function renderizarFilaArquivos() {
         const box = document.getElementById('preview-lista');
         const container = document.getElementById('preview-itens');
         document.getElementById('contador-arquivos').textContent = `${filaArquivos.length} arquivo(s)`;
@@ -532,22 +706,58 @@
             return;
         }
 
+        const empresasLivros = Array.from(new Set(
+            filaArquivos.filter(f => f.origem === 'livro').map(f => f.empresa)
+        ));
+
         box.style.display = 'block';
-        container.innerHTML = filaArquivos.map((item, idx) => `
-            <div class="preview-row">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="tag-tipo ${item.origem === 'livro' ? 'tag-livro' : 'tag-plan'}">
-                        ${item.origem === 'livro' ? 'LIVRO' : 'PLANILHA'}
-                    </span>
-                    <span>${item.file.name}</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <span style="color:#64748b; font-size:0.78rem;">Empresa:</span>
-                    <input type="text" class="input-empresa" value="${item.empresa}"
-                           onchange="filaArquivos[${idx}].empresa = this.value.trim().toUpperCase() || 'GERAL'">
-                </div>
-            </div>
-        `).join('');
+        container.innerHTML = filaArquivos.map((item, idx) => {
+            if (item.origem === 'livro') {
+                return `
+                    <div class="preview-row">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="tag-tipo tag-livro">PDF LIVRO</span>
+                            <span style="font-weight:600;">${item.file.name}</span>
+                            ${item.pareado ? '<span class="badge-match-ok">✓ Com planilha</span>' : '<span class="badge-match-warn">Aguardando planilha</span>'}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="color:#64748b; font-size:0.78rem;">Empresa:</span>
+                            <input type="text" class="input-empresa" value="${item.empresa}"
+                                   onchange="alterarEmpresaLivro(${idx}, this.value)">
+                            <button type="button" onclick="removerDaFila(${idx})" title="Remover arquivo"
+                                    style="background:none; border:none; color:#dc2626; font-weight:700; cursor:pointer; font-size:0.95rem; padding:0 4px;">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const opcoes = new Set([...empresasLivros, item.empresa]);
+                const optionsHtml = Array.from(opcoes).map(emp =>
+                    `<option value="${emp}" ${emp === item.empresa ? 'selected' : ''}>${emp}</option>`
+                ).join('');
+
+                return `
+                    <div class="preview-row" style="background:#fafbff;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="tag-tipo tag-plan">PLANILHA</span>
+                            <span>${item.file.name}</span>
+                            ${item.pareado ? '<span class="badge-match-ok">✓ Pareada ao PDF</span>' : '<span class="badge-match-warn">⚠ Vincular PDF</span>'}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="color:#64748b; font-size:0.78rem;">Corresponde ao PDF:</span>
+                            <select class="select-vinculo" onchange="vincularPlanilhaAoLivro(${idx}, this.value)">
+                                ${optionsHtml}
+                            </select>
+                            <button type="button" onclick="removerDaFila(${idx})" title="Remover arquivo"
+                                    style="background:none; border:none; color:#dc2626; font-weight:700; cursor:pointer; font-size:0.95rem; padding:0 4px;">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }).join('');
     }
 
     async function iniciarFilaConferencia() {
@@ -574,7 +784,7 @@
 
         for (let i = 0; i < filaArquivos.length; i++) {
             const item = filaArquivos[i];
-            const pct = Math.round(((i) / filaArquivos.length) * 100);
+            const pct = Math.round((i / filaArquivos.length) * 100);
             progressTexto.textContent = `Processando ${i + 1} de ${filaArquivos.length}: ${item.file.name} (${item.empresa})`;
             progressPct.textContent = `${pct}%`;
             progressFill.style.width = `${pct}%`;
