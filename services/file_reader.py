@@ -176,16 +176,19 @@ def ler_arquivo_tabular(caminho_arquivo: str, modo_operacao: str = 'resumo_cfop'
                 texto_bruto = " ".join([p.extract_text() or '' for p in reader.pages])
                 texto_limpo = re.sub(r'\s+', ' ', texto_bruto)
 
+                # Captura exata:
+                # 01/09/2026Nota 1 08601/09/2026 MT 56.690,00 2-918 2 40.000,0034408
                 padrao_modelo_p1 = re.compile(
-                    r'(\d{2}/\d{2}/\d{4})\s*'
-                    r'(?:(?!\d{2}/\d{2}/\d{4}).){0,80}?'
-                    r'(\d{2}/\d{2}/\d{4})\s*'
-                    r'[A-Z]{2}\s*'
-                    r'(\d{1,3}(?:\.\d{3})*,\d{2})\s*'
-                    r'([123567][\.\-]\d{3})\s*'
-                    r'(?:(?!\d{2}/\d{2}/\d{4}).){0,300}?'
-                    r'(?:,\d{2}|\s)(\d{1,9})'
-                    r'(?=\s*\d{2}/\d{2}/\d{4}|\s*OBS|\s*TOTAL|\s*SUBTOTAL|\s*FOLHA|\s*DEMONSTRATIVO|\s*$)'
+                    r'(\d{2}/\d{2}/\d{4})\s*'                     # 1. Data de entrada
+                    r'(?:(?!\d{2}/\d{2}/\d{4}).){0,120}?'         # Espécie / Série / Código emitente
+                    r'(\d{2}/\d{2}/\d{4})\s*'                     # 2. Data de emissão
+                    r'[A-Z]{2}\s*'                                # UF
+                    r'(\d{1,3}(?:\.\d{3})*,\d{2})\s+'             # 3. Valor Contábil total da nota
+                    r'([123567][\.\-]\d{3})\s+'                   # 4. CFOP
+                    r'[123]\s+'                                   # Código tributação (1, 2 ou 3)
+                    r'\d{1,3}(?:\.\d{3})*,\d{2}\s*'               # 1º valor tributado (logo antes da nota)
+                    r'(\d{1,9})'                                  # 5. Número da Nota grudado logo após os centavos
+                    r'(?=\s|$)'
                 )
 
                 for match in padrao_modelo_p1.finditer(texto_limpo):
@@ -199,10 +202,6 @@ def ler_arquivo_tabular(caminho_arquivo: str, modo_operacao: str = 'resumo_cfop'
                         "cfop": cfop_limpo,
                         "valor": valor_str
                     })
-
-                pos_teste = texto_limpo.find('34408')
-                if pos_teste != -1:
-                    raise FileReadError(f"Trecho da nota 34408 no PDF: [{texto_limpo[max(0, pos_teste-120):pos_teste+200]}]")
 
                 if not registros:
                     amostra = texto_limpo[:500]
